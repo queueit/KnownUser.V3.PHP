@@ -90,8 +90,7 @@ class KnownUser
                 $eventConfig->version = $integrationConfig["Version"];
                 $targetUrl = "";
 
-         // var_dump($eventConfig);
-         //  var_dump($integrationConfig);
+       
                 switch($integrationConfig["RedirectLogic"])
                 {
                     case "ForecedTargetUrl" :
@@ -103,9 +102,7 @@ class KnownUser
                     default :
                         $targetUrl= $currentUrl;
                 }
-               //var_dump($currentUrl);
-                
-          //   var_dump($targetUrl);
+
                 return KnownUser::validateRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
             }
 }
