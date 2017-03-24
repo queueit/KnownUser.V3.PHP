@@ -10,13 +10,13 @@ class QueueUrlParams
         const KeyValueSeparatorChar = '_';
         const KeyValueSeparatorGroupChar = '~';
 
-        public $timeStamp;
-        public $eventId;
-        public $hashCode;
-        public $extendableCookie;
-        public $cookieValidityMinute;
-        public $queueITToken;
-        public $queueITTokenWithoutHash;
+        public $timeStamp=0;
+        public $eventId="";
+        public $hashCode="";
+        public $extendableCookie=false;
+        public $cookieValidityMinute=null;
+        public $queueITToken="";
+        public $queueITTokenWithoutHash="";
         public static function extractQueueParams(string $queueitToken):QueueUrlParams
         {
 
@@ -61,12 +61,13 @@ class QueueUrlParams
                     }
                  }
             }
-
-                $result->queueITTokenWithoutHash = str_replace(
+        $result->queueITTokenWithoutHash = str_replace(
                     QueueUrlParams::KeyValueSeparatorGroupChar 
                     .QueueUrlParams::HashKey
                     .QueueUrlParams::KeyValueSeparatorChar
-                    .(isset($result->hashCode)?$result->hashCode:""), "", $result->queueITToken);
+                    .$result->hashCode, "", $result->queueITToken);
+                    
+
   
             return $result;
 
