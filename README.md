@@ -109,7 +109,7 @@ Helper method to get the current url (you can have your own):
 ```
 
 ## Installation
-Copy the files: KnownUser.php, Models.php, UserInQueueService.php, UserInQueueStateCookieRepository.php and IntegrationConfigHelpers.php
+Copy the files: KnownUser.php, Models.php, UserInQueueService.php, UserInQueueStateCookieRepository.php, QueueITHelpers.php and IntegrationConfigHelpers.php
 
 
 ## Alternative Implementation

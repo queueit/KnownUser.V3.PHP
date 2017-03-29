@@ -1,0 +1,37 @@
+{
+    "Description": "Sample integration configuration",
+    "Integrations": [
+        {
+            "Name": "sample",
+            "EventId": "knownuser3demo",
+            "CookieDomain": "",
+            "LayoutName": "",
+            "Culture": "",
+            "ExtendCookieValidity": false,
+            "CookieValidityMinute": 5,
+            "Triggers": [
+                {
+                    "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "*",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": false
+                        }
+                    ],
+                    "LogicalOperator": "And"
+                }
+            ],
+            "QueueDomain": "ticketania.queue-it.net",
+            "RedirectLogic": "AllowTParameter",
+            "ForcedTargetUrl": ""
+        }
+    ],
+    "CustomerId": "ticketania",
+    "AccountId": "ticketania",
+    "Version": 1,
+    "PublishDate": "2017-03-28T14:32:49.6079291Z",
+    "ConfigDataVersion": "1.0.0.1"
+}

@@ -1,5 +1,5 @@
-﻿# Help and examples
-This folder contains some extra helper functions and examples.
+﻿# Integration Configuration downloader
+This folder contains some extra info on how to implement the Integration Configuration downloader.
 
 
 ## Downloading the Integration Configuration
@@ -11,10 +11,6 @@ Please contact Queue-it support through the Go Queue-it self-service portal to g
 
 ![Configuration Provider flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/ConfigurationProviderExample.PNG)
 
-
-## Helper functions
-The [QueueITHelpsers.php](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/QueueITHelpers.php) file includes some helper function 
-to make the reading of the `queueittoken` easier. 
 
 
 
