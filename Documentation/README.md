@@ -13,7 +13,7 @@ Please contact Queue-it support through the Go Queue-it self-service portal to g
 
 
 ## Helper functions
-The [QueueITHelpsers.cs](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/QueueITHelpers.php) file includes some helper function 
+The [QueueITHelpsers.php](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/QueueITHelpers.php) file includes some helper function 
 to make the reading of the `queueittoken` easier. 
 
 
