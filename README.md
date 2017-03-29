@@ -12,7 +12,7 @@ The most important fields of the `queueittoken` are:
 
 The high level logic is as follows:
 
-![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUserFlow.png)
+![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUser%20flow.PNG)
 
  1. User requests a page on your server
  2. The validation method sees that the has no Queue-it session cookie and no `queueittoken` and sends him to the correct queue based on the configuration
@@ -107,6 +107,10 @@ Helper method to get the current url (you can have your own):
     return $myUrl; 
  }
 ```
+
+## Installation
+Copy the files: KnownUser.php, Models.php, UserInQueueService.php, UserInQueueStateCookieRepository.php and IntegrationConfigHelpers.php
+
 
 ## Alternative Implementation
 If your application server (maybe due to security reasons) is not allowed to do external GET requests, then you have three options:
