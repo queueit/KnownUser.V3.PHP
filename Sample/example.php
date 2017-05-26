@@ -3,14 +3,15 @@ error_reporting(E_ALL);
 require_once( __DIR__ .'/../Models.php');
 require_once( __DIR__ .'/../KnownUser.php');
 $configText = file_get_contents('integrationconfig.json');
-$customerID = "ticketania"; //Your Queue-it customer ID
-$secretKey = "b94d25c7-b7d7-4dee-92cf-b5732e05daffc4856e1e-7a8e-4b57-b4b5-7719518caecd"; //Your 72 char secrete key as specified in Go Queue-it self-service platform
+$customerID = ""; //Your Queue-it customer ID
+$secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
 $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
+    $fullUrl = getFullRequestUri();
 	//Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig($fullUrl, 
 			$queueittoken, $configText, $customerID, $secretKey);
 	
     if($result->doRedirect())
@@ -21,8 +22,20 @@ try
     }
     if(!empty($queueittoken))
     {
+        
 		//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
-		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+        if(strpos($fullUrl,"&queueittoken=")!==false)
+        {
+		header('Location: '.str_replace("&queueittoken=".$queueittoken,"",$fullUrl));
+        }
+        else if(strpos($fullUrl,"?queueittoken=".$queueittoken."&")!==false)
+        {
+		header('Location: '.str_replace("queueittoken=".$queueittoken,"",  $fullUrl));
+        }
+        else if(strpos($fullUrl,"?queueittoken=".$queueittoken)!==false)
+        {
+		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  $fullUrl));
+        }
 		die();
     }
 }
@@ -51,7 +64,7 @@ catch(\Exception $e)
     <title>Sample KnownUser Application</title>
   </head>
   <body bgcolor=white>
-
+      <span><?=$result->queueId?></span>
     <table border="0" cellpadding="10">
       <tr>
         <td>

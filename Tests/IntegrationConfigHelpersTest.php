@@ -96,23 +96,13 @@ class CookieValidatorHelperTest extends UnitTestCase
         $triggerPart ["IsIgnoreCase"] = true;
         $triggerPart ["IsNegative"] = false;
         $triggerPart ["ValueToCompare"] = "1";
-      QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName)
-        {
-               $this->assertTrue($cookieName=="c1"); 
-                
-        };
-        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart, array("c1"=>"hhh")));
 
-         $triggerPart = array();
+        $triggerPart = array();
         $triggerPart ["CookieName"] = "c1";
         $triggerPart ["Operator"] = "Contains";
-   
         $triggerPart ["ValueToCompare"] = "1";
-      QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName)
-        {
-               return "1";
-        };
-        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart, array("c2"=>"ddd","c1"=>"1")));
 
         $triggerPart = array();
         $triggerPart ["CookieName"] = "c1";
@@ -120,13 +110,7 @@ class CookieValidatorHelperTest extends UnitTestCase
         $triggerPart ["ValueToCompare"] = "1";
         $triggerPart ["IsNegative"] = false;
         $triggerPart ["IsIgnoreCase"] = true;
-        
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName)
-        {
-            if($cookieName=="c1")
-               return "1";
-        };
-        $this->assertTrue( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart,array("c2"=>"ddd","c1"=>"1")));
 
         $triggerPart = array();
         $triggerPart ["CookieName"] = "c1";
@@ -134,13 +118,7 @@ class CookieValidatorHelperTest extends UnitTestCase
         $triggerPart ["ValueToCompare"] = "1";
         $triggerPart ["IsNegative"] = true;
         $triggerPart ["IsIgnoreCase"] = true;
-        
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName)
-        {
-            if($cookieName=="c1")
-               return "1";
-        };
-        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart,array("c2"=>"ddd","c1"=>"1")));
 
     }
 
@@ -180,15 +158,12 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                         )
                 )
         );
-        $getCookieIsCalled = false;
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
-               $this->assertTrue($cookieName=="c1"); 
-        };
+        
+
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
 
-        $this->assertTrue( $testObject->getMatchedIntegrationConfig($integrationConfig,   $url) === null);
+        $this->assertTrue( $testObject->getMatchedIntegrationConfig($integrationConfig,   $url, array()) === null);
     
     }
     function test_getMatchedIntegrationConfig_OneTrigger_And_Matched()
@@ -224,20 +199,12 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                         )
                 )
         );
-        $getCookieIsCalled = false;
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
 
-               if($cookieName=="c1")
-               {
-                return "Value1";
-               
-               }
-        };
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url)["Name"]==="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
+                $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]==="integration1");
     }
 
 
@@ -274,21 +241,11 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                         )
                 )
         );
-        $getCookieIsCalled = false;
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
 
-               if($cookieName=="c1")
-               {
-              
-                return "Value1";
-               
-               }
-        };
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url)==null);
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))==null);
 
     }
 
@@ -325,19 +282,11 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                         )
                 )
         );
-        $getCookieIsCalled = false;
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
 
-               if($cookieName=="c1")
-               {
-                return "Value1";
-               }
-        };
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url)==null);
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))==null);
 
     }
     function test_getMatchedIntegrationConfig_TwoTriggers_Matched()
@@ -388,22 +337,11 @@ class IntegrationEvaluatorTest extends UnitTestCase
                 )
         );
   
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
 
-               if($cookieName=="c1")
-               {
-                  
-                    return "Value1";
-               
-               }
-               else
-                return null;
-        };
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url)["Name"]=="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
  
     }
     function test_getMatchedIntegrationConfig_ThreeIntegrationsInOrder_SecondMatched()
@@ -467,22 +405,11 @@ class IntegrationEvaluatorTest extends UnitTestCase
                 )
         );
   
-        QueueIT\KnownUserV3\SDK\CookieValidatorHelper::$getCookieCallback = function(string $cookieName) use(&$getCookieIsCalled)
-        {
 
-               if($cookieName=="c1")
-               {
-                  
-                    return "Value1";
-               
-               }
-               else
-                return null;
-        };
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url)["Name"]=="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
     }
        
 }
