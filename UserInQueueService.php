@@ -25,7 +25,7 @@ interface IUserInQueueService
 
 class UserInQueueService implements IUserInQueueService
 {
-    const CodeVersion = "1.0.0.0";
+    const SDK_VERSION = "1.0.0.0";
     private $userInQueueStateRepository;
 
     function __construct(IUserInQueueStateRepository $userInQueueStateRepository) {
@@ -127,7 +127,7 @@ class UserInQueueService implements IUserInQueueService
         $queryStringList = array();
         array_push($queryStringList,"c=".urlencode($customerId));
         array_push($queryStringList,"e=".urlencode($config->eventId));
-        array_push($queryStringList,"ver=v3-php-".UserInQueueService::CodeVersion); 
+        array_push($queryStringList,"ver=v3-php-".UserInQueueService::SDK_VERSION); 
         array_push($queryStringList,"cver=". (!is_null($config->version)?$config->version:'-1'));
 
         if (!Utils::isNullOrEmptyString($config->culture)) {
