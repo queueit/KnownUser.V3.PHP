@@ -139,8 +139,8 @@ class ComparisonOperatorHelper
         $right = !is_null($right) ? $right : "";
 
         switch ($opt) {
-            case "EqualS":
-                return ComparisonOperatorHelper::equalS($left, $right, $isNegative, $isIgnoreCase);
+            case "Equals":
+                return ComparisonOperatorHelper::equals($left, $right, $isNegative, $isIgnoreCase);
             case "Contains":
                 return ComparisonOperatorHelper::contains($left, $right, $isNegative, $isIgnoreCase);
             case "StartsWith":
@@ -171,7 +171,7 @@ class ComparisonOperatorHelper
         }
     }
 
-    private static function equalS($left, $right, $isNegative, $ignoreCase) {
+    private static function equals($left, $right, $isNegative, $ignoreCase) {
         if ($ignoreCase) {
             $left = strtoupper($left);
             $right = strtoupper($right);
