@@ -61,7 +61,7 @@ class UrlValidatorHelperTest extends UnitTestCase
 
            $triggerPart ["ValueToCompare"] = "/Test/t1";
            $triggerPart ["UrlPart"] = "PagePath";
-           $triggerPart ["Operator"]= "EqualS";
+           $triggerPart ["Operator"]= "Equals";
            $triggerPart ["IsIgnoreCase"] = true;
            $triggerPart ["IsNegative"] = false;
            $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,  "http://test.tesdomain.com:8080/test/t1?q=2&y02"));
@@ -138,7 +138,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>false,
@@ -179,7 +179,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>true,
@@ -221,7 +221,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>true,
@@ -262,7 +262,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>true,
@@ -286,7 +286,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))==null);
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]==="integration1");
 
     }
     function test_getMatchedIntegrationConfig_TwoTriggers_Matched()
@@ -303,7 +303,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>true,
@@ -316,7 +316,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                     "TriggerParts"=>array(
                                                                             array(
                                                                             "CookieName" =>"c1",
-                                                                            "Operator" =>"EqualS",
+                                                                            "Operator" =>"Equals",
                                                                             "ValueToCompare" =>"Value1",
                                                                             "ValidatorType"=> "CookieValidator",
                                                                             "IsIgnoreCase"=>false,
@@ -392,7 +392,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
                                                 "TriggerParts"=>array(
                                                                         array(
                                                                         "CookieName" =>"c1",
-                                                                        "Operator" =>"EqualS",
+                                                                        "Operator" =>"Equals",
                                                                         "ValueToCompare" =>"value1",
                                                                         "ValidatorType"=> "CookieValidator",
                                                                         "IsIgnoreCase"=>true,
@@ -409,7 +409,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,$url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
     }
        
 }
