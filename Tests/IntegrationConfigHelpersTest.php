@@ -4,14 +4,14 @@ require_once( __DIR__ .'/../IntegrationConfigHelpers.php');
 error_reporting(E_ALL);
 class ComparisonOperatorHelperTest extends UnitTestCase 
 {
-  function  test_evaluate_equalS()
+  function  test_evaluate_equals()
     {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", false, false, "test1", "test1"));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", false, false, "test1", "Test1"));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", false, true, "test1", "Test1"));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", true, false, "test1", "Test1"));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", true, false, "test1", "test1"));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualS", true, true, "test1", "Test1"));
+            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "test1"));
+            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "Test1"));
+            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, true, "test1", "Test1"));
+            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "Test1"));
+            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "test1"));
+            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, true, "test1", "Test1"));
     }
  function  test_evaluate_contains()
     {
