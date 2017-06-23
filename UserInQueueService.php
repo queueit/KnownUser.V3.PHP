@@ -145,7 +145,7 @@ class UserInQueueService implements IUserInQueueService
         $this->userInQueueStateRepository->cancelQueueCookie($eventId, $cookieDomain);
     }
 
-    public function ExtendQueueCookie(
+    public function extendQueueCookie(
         $eventId,
         $cookieValidityMinute,
         $cookieDomain,
