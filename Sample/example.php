@@ -2,6 +2,7 @@
 error_reporting(E_ALL);
 require_once( __DIR__ .'/../Models.php');
 require_once( __DIR__ .'/../KnownUser.php');
+header("Cache-Control: max-age=0, no-cache, no-store, must-revalidate");
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
