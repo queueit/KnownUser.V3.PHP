@@ -57,6 +57,7 @@ the following method is all that is needed to validate that a user has been thro
 
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
+header("Cache-Control: max-age=0, no-cache, no-store, must-revalidate");
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
@@ -125,6 +126,7 @@ The following is an example of how to specify the configuration in code:
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
+header("Cache-Control: max-age=0, no-cache, no-store, must-revalidate");
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
 
