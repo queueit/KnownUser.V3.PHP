@@ -93,8 +93,9 @@ catch(\Exception $e)
 ```
 
 Helper method to get the current url (you can have your own).
-The result of this helper method is used to match Triggers and as the Target url (where to return the users to)
-It is therefor important that the result is exactly the url of the users browsers
+The result of this helper method is used to match Triggers and as the Target url (where to return the users to).
+It is therefor important that the result is exactly the url of the users browsers. 
+
 So if your webserver is e.g. behind a load balancer that modifies the host name or port, reformat the helper method as needed:
 ```php
  function getFullRequestUri()
