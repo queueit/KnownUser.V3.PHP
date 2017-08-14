@@ -6,13 +6,20 @@ require_once( __DIR__ . '/../UserInQueueService.php');
 
 error_reporting(E_ALL);
 
+class HttpRequestProviderMock implements QueueIT\KnownUserV3\SDK\IHttpRequestProvider
+{
+    public $userAgent;
+    public function getUserAgent() {
+        return $this->userAgent;
+    }
+}
+
 class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueService {
 
     public $arrayFunctionCallsArgs;
     public $arrayReturns;
 
     function __construct() {
-
         $this->arrayFunctionCallsArgs = array(
             'validateRequest' => array(),
             'cancelQueueCookie' => array(),
@@ -77,7 +84,6 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
         }
         return false;
     }
-
 }
 
 class KnownUserTest extends UnitTestCase {
@@ -335,6 +341,11 @@ class KnownUserTest extends UnitTestCase {
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
 
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->userAgent="googlebot";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
 
         $integrationConfigString = <<<EOT
             {
@@ -353,12 +364,19 @@ class KnownUserTest extends UnitTestCase {
                     {
                       "TriggerParts": [
                         {
-                          "Operator": "Contains",
-                          "ValueToCompare": "event1",
-                          "UrlPart": "PageUrl",
-                          "ValidatorType": "UrlValidator",
-                          "IsNegative": false,
-                          "IsIgnoreCase": true
+							"Operator": "Contains",
+							"ValueToCompare": "event1",
+							"UrlPart": "PageUrl",
+							"ValidatorType": "UrlValidator",
+							"IsNegative": false,
+							"IsIgnoreCase": true
+                        },
+                        {
+							"Operator": "Contains",
+							"ValueToCompare": "googlebot",
+							"ValidatorType": "UserAgentValidator",
+							"IsNegative": false,
+							"IsIgnoreCase": false
                         }
                       ],
                       "LogicalOperator": "And"

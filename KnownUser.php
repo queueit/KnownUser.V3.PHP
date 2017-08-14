@@ -11,13 +11,22 @@ class KnownUser
     //used for unittest
     private static $userInQueueService = NULL;
 
-    private static function createUserInQueueService() {
+    private static function getUserInQueueService() {
         if (KnownUser::$userInQueueService == NULL) 
         {
             return new UserInQueueService(new UserInQueueStateCookieRepository(new CookieManager()));
         }
-
         return KnownUser::$userInQueueService;
+    }
+
+    //used for unittest
+    private static $httpRequestProvider= null;
+    private static function getHttpRequestProvider() {
+        if (KnownUser::$httpRequestProvider == NULL) 
+        {
+            return new HttpRequestProvider();
+        }
+        return KnownUser::$httpRequestProvider;
     }
 
     public static function cancelQueueCookie($eventId, $cookieDomain) {
@@ -25,7 +34,7 @@ class KnownUser
             throw new KnownUserException("eventId can not be null or empty.");
         }
 
-        $userInQueueService = KnownUser::createUserInQueueService();
+        $userInQueueService = KnownUser::getUserInQueueService();
         $userInQueueService->cancelQueueCookie($eventId, $cookieDomain);
     }
 
@@ -39,7 +48,7 @@ class KnownUser
         if (!is_int($cookieValidityMinute) || intval($cookieValidityMinute) <= 0) {
             throw new KnownUserException("cookieValidityMinute should be integer greater than 0.");
         }
-        $userInQueueService = KnownUser::createUserInQueueService();
+        $userInQueueService = KnownUser::getUserInQueueService();
         $userInQueueService->extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey);
     }
 
@@ -68,7 +77,7 @@ class KnownUser
             throw new KnownUserException("extendCookieValidity should be valid boolean.");
         }
 
-        $userInQueueService = KnownUser::createUserInQueueService();
+        $userInQueueService = KnownUser::getUserInQueueService();
         return $userInQueueService->validateRequest($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
     }
 
@@ -87,7 +96,8 @@ class KnownUser
         try {
             $integrationEvaluator = new IntegrationEvaluator();
             $customerIntegration = json_decode($integrationsConfigString, true);
-            $integrationConfig = $integrationEvaluator->getMatchedIntegrationConfig($customerIntegration, $currentUrl, KnownUser::getCookieArray());
+            $integrationConfig = $integrationEvaluator->getMatchedIntegrationConfig($customerIntegration, $currentUrl,
+                 KnownUser::getCookieArray(), KnownUser::getHttpRequestProvider()->getUserAgent());
 
             if ($integrationConfig == null) {
                 return new RequestValidationResult(NULL, NULL, NULL);
@@ -115,8 +125,6 @@ class KnownUser
         } catch (\Exception $e) {
             throw new KnownUserException("integrationConfiguration text was not valid: ". $e->getMessage());
         }
-       //var_dump($targetUrl);
-        //var_dump($integrationConfig["RedirectLogic"]);
         return KnownUser::validateRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
     }
 
@@ -145,5 +153,16 @@ class CookieManager implements ICookieManager
             $domain = "";
         }
         setcookie($name, $value, $expire, "/", $domain, false, true);
+    }
+}
+interface  IHttpRequestProvider 
+{
+	function getUserAgent();
+}
+
+class HttpRequestProvider implements IHttpRequestProvider
+{
+    function getUserAgent() {
+        return array_key_exists ('HTTP_USER_AGENT',$_SERVER) ? $_SERVER['HTTP_USER_AGENT'] : "";
     }
 }

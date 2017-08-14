@@ -121,9 +121,41 @@ class CookieValidatorHelperTest extends UnitTestCase
         $this->assertFalse( QueueIT\KnownUserV3\SDK\CookieValidatorHelper::evaluate($triggerPart,array("c2"=>"ddd","c1"=>"1")));
 
     }
-
-
 }
+
+class UserAgentValidatorHelperTest extends UnitTestCase 
+{
+	function test_evaluate() {
+        $triggerPart = array();
+        $triggerPart ["Operator"] = "Contains";
+        $triggerPart ["IsIgnoreCase"] = false;
+        $triggerPart ["IsNegative"] = false;
+        $triggerPart ["ValueToCompare"] = "googlebot";
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\UserAgentValidatorHelper::evaluate($triggerPart, "Googlebot sample useraagent"));
+
+        $triggerPart = array();
+        $triggerPart ["Operator"] = "Equals";
+        $triggerPart ["ValueToCompare"] = "googlebot";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = true;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UserAgentValidatorHelper::evaluate($triggerPart,"oglebot sample useraagent"));
+
+        $triggerPart = array();
+        $triggerPart ["Operator"] = "Contains";
+        $triggerPart ["ValueToCompare"] = "googlebot";
+        $triggerPart ["IsIgnoreCase"] = false;
+        $triggerPart ["IsNegative"] = true;
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\UserAgentValidatorHelper::evaluate($triggerPart, "googlebot"));
+
+        $triggerPart = array();
+        $triggerPart ["Operator"] = "Contains";
+        $triggerPart ["ValueToCompare"] = "googlebot";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UserAgentValidatorHelper::evaluate($triggerPart, "Googlebot"));
+    }
+}
+
 class IntegrationEvaluatorTest extends UnitTestCase 
 {
    function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched()
@@ -163,9 +195,9 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
 
-        $this->assertTrue( $testObject->getMatchedIntegrationConfig($integrationConfig,   $url, array()) === null);
-    
+        $this->assertTrue( $testObject->getMatchedIntegrationConfig($integrationConfig, $url, array(), "") === null);
     }
+    
     function test_getMatchedIntegrationConfig_OneTrigger_And_Matched()
     {
       
@@ -204,7 +236,55 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
         $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
-                $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]==="integration1");
+                $url,array("c2"=>"ddd","c1"=>"Value1"),"")["Name"]==="integration1");
+    }
+
+    function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched_UserAgent()
+    {
+      
+        $integrationConfig = array(
+                "Integrations"=>array(
+                                     array(
+                                            "Name"=>"integration1",
+                                            "Triggers"=> array(
+                                                array(
+                                                "LogicalOperator"=>"And",
+                                                "TriggerParts"=>array(
+                                                                        array(
+                                                                        "CookieName" =>"c1",
+                                                                        "Operator" =>"Equals",
+                                                                        "ValueToCompare" =>"value1",
+                                                                        "ValidatorType"=> "CookieValidator",
+                                                                        "IsIgnoreCase"=>true,
+                                                                        "IsNegative"=>false
+                                                                        ),
+                                                                        array(
+                                                                        "UrlPart" => "PageUrl",
+                                                                        "ValidatorType"=> "UrlValidator",
+                                                                        "ValueToCompare"=> "test",
+                                                                        "Operator"=>"Contains",
+                                                                        "IsIgnoreCase"=>false,
+                                                                        "IsNegative"=>false
+                                                                        ),
+                                                                        array(
+                                                                        "ValidatorType"=> "UserAgentValidator",
+                                                                        "ValueToCompare"=> "googlebot",
+                                                                        "Operator"=>"Contains",
+                                                                        "IsIgnoreCase"=>true,
+                                                                        "IsNegative"=>true
+                                                                        )
+                                                                    )
+                                                    )
+                                            )
+                                        )
+                )
+        );
+
+        $url = "http://test.tesdomain.com:8080/test?q=2";
+        $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
+     
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
+                $url,array("c2"=>"ddd","c1"=>"Value1"),"bot.html google.com googlebot test")==NULL);
     }
 
 
@@ -245,9 +325,10 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))==null);
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"),"")==null);
 
     }
+
 
     function test_getMatchedIntegrationConfig_OneTrigger_Or_Matched()
     {
@@ -286,7 +367,8 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]==="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
+                $url,array("c2"=>"ddd","c1"=>"Value1"),"")["Name"]==="integration1");
 
     }
     function test_getMatchedIntegrationConfig_TwoTriggers_Matched()
@@ -341,7 +423,8 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,
+                    array("c2"=>"ddd","c1"=>"Value1"),"")["Name"]=="integration1");
  
     }
     function test_getMatchedIntegrationConfig_ThreeIntegrationsInOrder_SecondMatched()
@@ -409,7 +492,8 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,$url,array("c2"=>"ddd","c1"=>"Value1"))["Name"]=="integration1");
+        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,$url,
+            array("c2"=>"ddd","c1"=>"Value1"),"")["Name"]=="integration1");
     }
        
 }

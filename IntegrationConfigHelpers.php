@@ -3,12 +3,12 @@ namespace QueueIT\KnownUserV3\SDK;
 
 interface IIntegrationEvaluator 
 {
-    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList);
+    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList, $userAgent);
 }
 
 class IntegrationEvaluator implements IIntegrationEvaluator 
 {
-    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList) {
+    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList, $userAgent) {
         if (!array_key_exists("Integrations", $customerIntegration) || !is_array($customerIntegration["Integrations"])) {
             return null;
         }
@@ -21,15 +21,15 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($trigger)) {
                     return false;
                 }
-                if ($this->evaluateTrigger($trigger, $currentPageUrl, $cookieList)) {
-                return $integrationConfig;
+                if ($this->evaluateTrigger($trigger, $currentPageUrl, $cookieList, $userAgent)) {
+					return $integrationConfig;
                 }
             }
         }
         return null;
     }
 
-    private function evaluateTrigger(array $trigger, $currentPageUrl, array $cookieList) {
+    private function evaluateTrigger(array $trigger, $currentPageUrl, array $cookieList, $userAgent) {
         if (!array_key_exists("LogicalOperator", $trigger) || !array_key_exists("TriggerParts", $trigger) || !is_array($trigger["TriggerParts"])) {
             return false;
         }
@@ -38,7 +38,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($triggerPart)) {
                     return false;
                 }
-                if ($this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList)) {
+                if ($this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList, $userAgent)) {
                     return true;
                 }
             }
@@ -48,7 +48,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($triggerPart)) {
                     return false;
                 }
-                if (!$this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList)) {
+                if (!$this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList, $userAgent)) {
                     return false;
                 }
             }
@@ -56,7 +56,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
         }
     }
 
-    private function evaluateTriggerPart(array $triggerPart, $currentPageUrl, array $cookieList) {
+    private function evaluateTriggerPart(array $triggerPart, $currentPageUrl, array $cookieList, $userAgent) {
         if (!array_key_exists("ValidatorType", $triggerPart)) {
             return false;
         }
@@ -66,6 +66,8 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 return UrlValidatorHelper::evaluate($triggerPart, $currentPageUrl);
             case "CookieValidator":
                 return CookieValidatorHelper::evaluate($triggerPart, $cookieList);
+            case "UserAgentValidator":
+                return UserAgentValidatorHelper::evaluate($triggerPart, $userAgent);
             default:
                 return false;
         }
@@ -128,6 +130,25 @@ class CookieValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $cookieValue, 
+            $triggerPart["ValueToCompare"]);
+    }
+}
+
+class UserAgentValidatorHelper 
+{
+    public static function evaluate(array $triggerPart, $userAgent) {
+        if (!array_key_exists("Operator", $triggerPart) ||
+            !array_key_exists("IsNegative", $triggerPart) ||
+            !array_key_exists("IsIgnoreCase", $triggerPart) ||
+            !array_key_exists("ValueToCompare", $triggerPart) ) {
+            return false;
+        }
+
+        return ComparisonOperatorHelper::evaluate(
+            $triggerPart["Operator"], 
+            $triggerPart["IsNegative"], 
+            $triggerPart["IsIgnoreCase"], 
+            $userAgent, 
             $triggerPart["ValueToCompare"]);
     }
 }
