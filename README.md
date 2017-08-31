@@ -1,3 +1,5 @@
+>You can find the latest released version [here](https://github.com/queueit/KnownUser.V3.PHP/releases/latest).
+
 # KnownUser.V3.PHP
 The Queue-it Security Framework is used to ensure that end users cannot bypass the queue by adding a server-side integration to your server. 
 
