@@ -10,6 +10,7 @@ class QueueUrlParams {
     const HashKey = "h";
     const EventIdKey = "e";
     const QueueIdKey = "q";
+    const RedirectTypeKey = "rt";
     const KeyValueSeparatorChar = '_';
     const KeyValueSeparatorGroupChar = '~';
 
@@ -21,6 +22,7 @@ class QueueUrlParams {
     public $queueITToken = "";
     public $queueITTokenWithoutHash = "";
     public $queueId = "";
+    public $redirectType="";
 
     public static function extractQueueParams($queueitToken) {
 
@@ -62,6 +64,10 @@ class QueueUrlParams {
                         $result->queueId = $paramNameValueArr[1];
                         break;
                     }
+                    case QueueUrlParams::RedirectTypeKey : {
+                        $result->redirectType = $paramNameValueArr[1];
+                        break;
+                    }
             }
         }
         $result->queueITTokenWithoutHash = str_replace(
@@ -69,8 +75,6 @@ class QueueUrlParams {
                 . QueueUrlParams::HashKey
                 . QueueUrlParams::KeyValueSeparatorChar
                 . $result->hashCode, "", $result->queueITToken);
-
-
 
         return $result;
     }

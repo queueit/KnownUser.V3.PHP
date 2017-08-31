@@ -10,7 +10,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
 {
     public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList, $userAgent) {
         if (!array_key_exists("Integrations", $customerIntegration) || !is_array($customerIntegration["Integrations"])) {
-            return null;
+            return NULL;
         }
         foreach ($customerIntegration["Integrations"] as $integrationConfig) {
             if (!is_array($integrationConfig) || !array_key_exists("Triggers", $integrationConfig) || !is_array($integrationConfig["Triggers"])) {
@@ -26,7 +26,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 }
             }
         }
-        return null;
+        return NULL;
     }
 
     private function evaluateTrigger(array $trigger, $currentPageUrl, array $cookieList, $userAgent) {
@@ -85,6 +85,7 @@ class UrlValidatorHelper
                 !array_key_exists("UrlPart", $triggerPart)) {
             return false;
         }
+
         return ComparisonOperatorHelper::Evaluate(
             $triggerPart["Operator"], 
             $triggerPart["IsNegative"], 

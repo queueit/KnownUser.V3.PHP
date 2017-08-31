@@ -7,7 +7,7 @@ class Utils
     return (!isset($value) || trim($value)==='');
     }
 }
-class EventConfig
+class QueueEventConfig
 {
     public $eventId;
     public $layoutName; 
@@ -17,15 +17,36 @@ class EventConfig
     public $cookieValidityMinute;
     public $cookieDomain;
     public $version;
+    public function getString()
+    {
+        return "EventId:".$this->eventId ."&Version:". $this->version
+            ."&QueueDomain:".$this->queueDomain ."&CookieDomain:".$this->cookieDomain. "&ExtendCookieValidity:".$this->extendCookieValidity
+            ."&CookieValidityMinute:" .$this->cookieValidityMinute."&LayoutName:".$this->layoutName."&Culture:".$this->culture;
+    }
+
 }
 
+class CancelEventConfig
+{
+    public $eventId;
+    public $queueDomain;
+    public $cookieDomain;
+    public $version;
+    public function getString()
+    {
+        return "EventId:".$this->eventId ."&Version:". $this->version
+            ."&QueueDomain:".$this->queueDomain ."&CookieDomain:".$this->cookieDomain;
+    }
+}
 class RequestValidationResult
 {     
     public $eventId;
     public $redirectUrl;
     public $queueId;
+    public $actionType;
 
-    function __construct($eventId, $queueId, $redirectUrl) {
+    function __construct($actionType ,$eventId, $queueId, $redirectUrl) {
+       $this->actionType= $actionType;
        $this->eventId= $eventId;
        $this->queueId= $queueId;
        $this->redirectUrl = $redirectUrl;
@@ -41,4 +62,10 @@ class KnownUserException extends \Exception
     function __construct($message, $code = 0) {
         parent::__construct($message, $code);
     }
+}
+class ActionTypes
+{
+    const QueueAction="Queue" ;
+    const CancelAction="Cancel" ;
+    
 }

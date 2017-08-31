@@ -26,9 +26,7 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
 
     public function cancelQueueCookie($eventId, $cookieDomain) {
         $cookieKey = self::getCookieKey($eventId);
-        if ($this->cookieManager->getCookie($cookieKey) !== null) {
-            $this->cookieManager->setCookie($cookieKey, null, -1, $cookieDomain);
-        }
+        $this->cookieManager->setCookie($cookieKey, null, -1, $cookieDomain);
     }
 
     public static function getCookieKey($eventId) {
