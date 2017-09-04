@@ -4,5 +4,5 @@
     "require": {
         "php": ">=5.3.3"
     },
-    "licence":"GNU LESSER GENERAL PUBLIC LICENSE"
+    "licence":"LGPL-3.0"
 }
