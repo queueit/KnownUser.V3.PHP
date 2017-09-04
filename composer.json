@@ -1,0 +1,8 @@
+{
+    "name": "queueit/knownuserv3",
+    "description": "please go to https://github.com/queueit/KnownUser.V3.PHP for description",
+    "require": {
+        "php": ">=5.3.3"
+    },
+    "licence":"GNU LESSER GENERAL PUBLIC LICENSE"
+}
