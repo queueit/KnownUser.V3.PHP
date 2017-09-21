@@ -1,6 +1,5 @@
 <?php
-
-require_once('simpletest/autorun.php');
+require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
 require_once( __DIR__ . '/../UserInQueueStateCookieRepository.php');
 error_reporting(E_ALL);
 
