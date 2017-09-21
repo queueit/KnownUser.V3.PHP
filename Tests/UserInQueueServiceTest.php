@@ -161,7 +161,7 @@ class UserInQueueServiceTest extends UnitTestCase
             
         $token = $this->generateHash('e1','queueId', strval(time() + (3 * 60)), 'False', null, $key);
         $token = str_replace("False", 'True', $token);
-        $expectedErrorUrl = "https://testDomain.com/error/hash?c=testCustomer&e=e1" .
+        $expectedErrorUrl = "https://testDomain.com/error/hash/?c=testCustomer&e=e1" .
                 "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
                 . "&cver=11"
                 . "&queueittoken=" . $token
@@ -195,7 +195,7 @@ class UserInQueueServiceTest extends UnitTestCase
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(FALSE,NULL, FALSE,   PHP_INT_MAX));
         $token = $this->generateHash('e1','queueId', strval(time() - (3 * 60)), 'False', null, $key);
 
-        $expectedErrorUrl = "https://testDomain.com/error/timestamp?c=testCustomer&e=e1" .
+        $expectedErrorUrl = "https://testDomain.com/error/timestamp/?c=testCustomer&e=e1" .
                   "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
                     . "&cver=11"
                 . "&queueittoken=" . $token
@@ -230,7 +230,7 @@ class UserInQueueServiceTest extends UnitTestCase
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(FALSE,NULL, FALSE,   PHP_INT_MAX));
         $token = $this->generateHash('e1', 'queueId',strval(time() - (3 * 60)), 'False', null, $key);
 
-        $expectedErrorUrl = "https://testDomain.com/error/eventid?c=testCustomer&e=e2" .
+        $expectedErrorUrl = "https://testDomain.com/error/eventid/?c=testCustomer&e=e2" .
                 "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
                 . "&cver=11"
                 . "&queueittoken=" . $token
@@ -316,7 +316,7 @@ class UserInQueueServiceTest extends UnitTestCase
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(FALSE, NULL, FALSE,   PHP_INT_MAX));
         $token = "";
 
-        $expectedErrorUrl = "https://testDomain.com?c=testCustomer&e=e1" .
+        $expectedErrorUrl = "https://testDomain.com/?c=testCustomer&e=e1" .
                 "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
                 . "&cver=11"
                 . "&cid=en-US"
@@ -358,7 +358,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->eventId == 'e1');
            $this->assertTrue($result->queueId == null);
 
-        $this->assertTrue(strpos($result->redirectUrl, "https://testDomain.com/error/hash?c=testCustomer&e=e1") == 0);
+        $this->assertTrue(strpos($result->redirectUrl, "https://testDomain.com/error/hash/?c=testCustomer&e=e1") == 0);
     }
 
     public function test_validateCancelRequest() {

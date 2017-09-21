@@ -28,7 +28,7 @@ interface IUserInQueueService
 
 class UserInQueueService implements IUserInQueueService
 {
-    const SDK_VERSION = "3.2.2";
+    const SDK_VERSION = "3.2.3";
     private $userInQueueStateRepository;
 
     function __construct(IUserInQueueStateRepository $userInQueueStateRepository) {
@@ -111,14 +111,14 @@ class UserInQueueService implements IUserInQueueService
         if (substr($domainAlias, -1) !== "/") {
             $domainAlias = $domainAlias . "/";
         }
-        $redirectUrl = "https://". $domainAlias. "error/". $errorCode. "?" .$query;
+        $redirectUrl = "https://". $domainAlias. "error/". $errorCode. "/?" .$query;
         $result = new RequestValidationResult(ActionTypes::QueueAction,$config->eventId, null, $redirectUrl);
 
         return $result;
     }
 
     private function getInQueueRedirectResult($customerId, $targetUrl, QueueEventConfig $config) {
-        $redirectUrl = "https://". $config->queueDomain ."?" 
+        $redirectUrl = "https://". $config->queueDomain ."/?" 
             .$this->getQueryString($customerId, $config->eventId,$config->version,$config->culture,$config->layoutName)
             .(!Utils::isNullOrEmptyString($targetUrl) ? "&t=". urlencode( $targetUrl) : "");
         $result = new RequestValidationResult(ActionTypes::QueueAction,$config->eventId, null, $redirectUrl);
