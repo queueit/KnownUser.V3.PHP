@@ -62,8 +62,8 @@ require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
 
 //Adding no cache headers to prevent browsers to cache requests
+header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 //end
 
@@ -141,8 +141,8 @@ require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
 
 //Adding no cache headers to prevent browsers to cache requests
+header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 //end
 
