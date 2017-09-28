@@ -13,6 +13,7 @@ interface ICookieManager
 {
     public function setCookie($name, $value, $expire, $domain);
     public function getCookie($cookieName);
+    public function getCookieArray();
 }
 
 class UserInQueueStateCookieRepository implements IUserInQueueStateRepository 

@@ -49,10 +49,10 @@ class KnownUser
         if (KnownUser::getIsDebug($queueitToken, $secretKey))
         {
             $dic = array(
-            "targetUrl"=> $targetUrl,
-            "queueitToken"=> $queueitToken,
-            "queueConfig"=>$queueConfig != null ? $queueConfig->getString() : "NULL",
-            "OriginalURL"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+            "TargetUrl"=> $targetUrl,
+            "QueueitToken"=> $queueitToken,
+            "QueueConfig"=>$queueConfig != null ? $queueConfig->getString() : "NULL",
+            "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
             KnownUser::doCookieLog($dic);
         }
         if (Utils::isNullOrEmptyString($customerId)) {
@@ -87,10 +87,10 @@ class KnownUser
         if (KnownUser::getIsDebug($queueitToken, $secretKey))
         {
             $dic = array(
-            "targetUrl"=> $targetUrl,
-            "queueitToken"=> $queueitToken,
-            "cancelConfig"=>$cancelConfig != null ? $cancelConfig->getString() : "NULL",
-            "OriginalURL"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+            "TargetUrl"=> $targetUrl,
+            "QueueitToken"=> $queueitToken,
+            "CancelConfig"=>$cancelConfig != null ? $cancelConfig->getString() : "NULL",
+            "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
             KnownUser::doCookieLog($dic);
         }
 
@@ -116,18 +116,18 @@ class KnownUser
         return $userInQueueService->validateCancelRequest($targetUrl, $cancelConfig, $customerId, $secretKey);
     }
 
-    public static function validateRequestByIntegrationConfig($currentUrl, $queueitToken, $integrationsConfigString, $customerId, $secretKey) {
+    public static function validateRequestByIntegrationConfig($currentUrlWithoutQueueITToken, $queueitToken, $integrationsConfigString, $customerId, $secretKey) {
         $isDebug = KnownUser::getIsDebug($queueitToken, $secretKey);
         if ($isDebug)
         {
             $dic = array(
-           "queueitToken"=> $queueitToken,
-           "pureUrl"=> $currentUrl,
-           "OriginalURL"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+           "QueueitToken"=> $queueitToken,
+           "PureUrl"=> $currentUrlWithoutQueueITToken,
+           "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
            KnownUser::doCookieLog($dic);
         }
-        if (Utils::isNullOrEmptyString($currentUrl)) {
-            throw new KnownUserException("currentUrl can not be null or empty.");
+        if (Utils::isNullOrEmptyString($currentUrlWithoutQueueITToken)) {
+            throw new KnownUserException("currentUrlWithoutQueueITToken can not be null or empty.");
         }
 
         if (Utils::isNullOrEmptyString($integrationsConfigString)) {
@@ -140,15 +140,15 @@ class KnownUser
                 $customerIntegration = json_decode($integrationsConfigString, true);
                 if ($isDebug)
                 {
-                    $dic = array("configVersion"=>$customerIntegration["Version"]);
+                    $dic = array("ConfigVersion"=>$customerIntegration["Version"]);
                     KnownUser::doCookieLog($dic);
                 }
-                $matchedConfig = $integrationEvaluator->getMatchedIntegrationConfig($customerIntegration, $currentUrl,
-                    KnownUser::getCookieArray(), KnownUser::getHttpRequestProvider()->getUserAgent());
+                $matchedConfig = $integrationEvaluator->getMatchedIntegrationConfig($customerIntegration, $currentUrlWithoutQueueITToken,
+                   KnownUser::getHttpRequestProvider());
 
                 if ($isDebug)
                 {
-                    $dic = array("matchedConfig"=>(($matchedConfig !=NULL) ? $matchedConfig["Name"]:"NULL"));
+                    $dic = array("MatchedConfig"=>(($matchedConfig !=NULL) ? $matchedConfig["Name"]:"NULL"));
                     KnownUser::doCookieLog($dic);
                 }
                 
@@ -180,7 +180,7 @@ class KnownUser
                             $targetUrl = "";
                             break;
                         default :
-                        $targetUrl = $currentUrl;
+                        $targetUrl = $currentUrlWithoutQueueITToken;
                 }
                  return KnownUser::resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
                 }
@@ -191,7 +191,7 @@ class KnownUser
                     $cancelEventConfig->queueDomain = $matchedConfig["QueueDomain"];
                     $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
                     $cancelEventConfig->version = $customerIntegration["Version"];
-                   return KnownUser::cancelRequestByLocalConfig($currentUrl, $queueitToken, $cancelEventConfig, $customerId, $secretKey);
+                   return KnownUser::cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey);
                 }
         }
              catch (\Exception $e) {
@@ -201,13 +201,7 @@ class KnownUser
         
     }
 
-    private static function getCookieArray() {
-        $arryCookie = array();
-        foreach ($_COOKIE as $key => $val) {
-            $arryCookie[$key] = $val;
-        }
-        return $arryCookie;
-    }
+
 
     private static function doCookieLog(array $debugInfos)
     {  
@@ -227,26 +221,22 @@ class KnownUser
           array_push( $cookieNameValues, $key.'='.$value);
         }
 
-        KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug",  implode('&', $cookieNameValues ),0,NULL);    
+        KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug", implode('|', $cookieNameValues ), 0, NULL);    
         KnownUser::$debugInfoArray = $debugInfos;
     }
 
     private static function getIsDebug($queueitToken, $secretKey)
     {
-
         $queueParams = QueueUrlParams::extractQueueParams($queueitToken);
         if(!Utils::isNullOrEmptyString($queueitToken)) {
             if (!Utils::isNullOrEmptyString($queueParams->redirectType) && strtolower($queueParams->redirectType) == "debug")
             {
-
-
-                $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
+			    $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
                 return strtoupper($calculatedHash) == strtoupper($queueParams->hashCode);
             }
         }
         return false;
     }
-
 }
 
 class CookieManager implements ICookieManager 
@@ -265,23 +255,38 @@ class CookieManager implements ICookieManager
         }
         setcookie($name, $value, $expire, "/", $domain, false, true);
     }
+    public function getCookieArray() {
+        $arryCookie = array();
+        foreach ($_COOKIE as $key => $val) {
+            $arryCookie[$key] = $val;
+        }
+        return $arryCookie;
+    }
 }
 interface  IHttpRequestProvider 
 {
     function getUserAgent();
     function getCookieManager();
     function getAbsoluteUri();
+    function getHeaderArray();
 }
 
 class HttpRequestProvider implements IHttpRequestProvider
 {
+    private $cookieManager;
+    private $allHeadersLowerCaseKeyArray;
     function getUserAgent() {
         return array_key_exists ('HTTP_USER_AGENT',$_SERVER) ? $_SERVER['HTTP_USER_AGENT'] : "";
     }
     function getCookieManager()
     {
-        return new CookieManager(); 
+        if($this->cookieManager==NULL)
+        {
+            $this->cookieManager = new CookieManager();
+        }
+        return $this->cookieManager;
     }
+
     function getAbsoluteUri()
     {
      // Get HTTP/HTTPS (the possible values for this vary from server to server)
@@ -294,5 +299,59 @@ class HttpRequestProvider implements IHttpRequestProvider
      if (!empty($_SERVER['PATH_INFO'])) $myUrl .= $_SERVER['PATH_INFO'];
  
      return $myUrl; 
+    }
+    function getHeaderArray()
+    {
+        if($this->allHeadersLowerCaseKeyArray == NULL)
+        {
+            $tempArray=array();
+            foreach( getallheaders() as $key=>$value)
+            {
+                $tempArray[strtolower($key)]=$value;
+            }
+            $this->allHeadersLowerCaseKeyArray = $tempArray;
+        }
+        return $this->allHeadersLowerCaseKeyArray;
+    }
+}
+
+//https://github.com/ralouphie/getallheaders/blob/master/src/getallheaders.php
+//PHP getallheaders polyfill
+if (!function_exists('getallheaders')) {
+    /**
+     * Get all HTTP header key/values as an associative array for the current request.
+     *
+     * @return string[string] The HTTP header key/value pairs.
+     */
+    function getallheaders()
+    {
+        $headers = array();
+        $copy_server = array(
+            'CONTENT_TYPE'   => 'Content-Type',
+            'CONTENT_LENGTH' => 'Content-Length',
+            'CONTENT_MD5'    => 'Content-Md5',
+        );
+        foreach ($_SERVER as $key => $value) {
+            if (substr($key, 0, 5) === 'HTTP_') {
+                $key = substr($key, 5);
+                if (!isset($copy_server[$key]) || !isset($_SERVER[$key])) {
+                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', $key))));
+                    $headers[$key] = $value;
+                }
+            } elseif (isset($copy_server[$key])) {
+                $headers[$copy_server[$key]] = $value;
+            }
+        }
+        if (!isset($headers['Authorization'])) {
+            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+                $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+            } elseif (isset($_SERVER['PHP_AUTH_USER'])) {
+                $basic_pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+                $headers['Authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $basic_pass);
+            } elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
+                $headers['Authorization'] = $_SERVER['PHP_AUTH_DIGEST'];
+            }
+        }
+        return $headers;
     }
 }

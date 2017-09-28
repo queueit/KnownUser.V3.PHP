@@ -35,6 +35,10 @@ class CookieManagerMockClass implements QueueIT\KnownUserV3\SDK\ICookieManager
         }
         return $this->cookieList[$cookieName]["value"];
     }
+    public function getCookieArray()
+    {
+        return array();
+    }
 }
 
 class UserInQueueStateCookieRepositoryTest extends UnitTestCase 

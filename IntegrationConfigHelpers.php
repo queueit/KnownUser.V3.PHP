@@ -3,12 +3,12 @@ namespace QueueIT\KnownUserV3\SDK;
 
 interface IIntegrationEvaluator 
 {
-    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList, $userAgent);
+    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, $request);
 }
 
 class IntegrationEvaluator implements IIntegrationEvaluator 
 {
-    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, array $cookieList, $userAgent) {
+    public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, $request) {
         if (!array_key_exists("Integrations", $customerIntegration) || !is_array($customerIntegration["Integrations"])) {
             return NULL;
         }
@@ -21,7 +21,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($trigger)) {
                     return false;
                 }
-                if ($this->evaluateTrigger($trigger, $currentPageUrl, $cookieList, $userAgent)) {
+                if ($this->evaluateTrigger($trigger, $currentPageUrl, $request)) {
 					return $integrationConfig;
                 }
             }
@@ -29,7 +29,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
         return NULL;
     }
 
-    private function evaluateTrigger(array $trigger, $currentPageUrl, array $cookieList, $userAgent) {
+    private function evaluateTrigger(array $trigger, $currentPageUrl, $request) {
         if (!array_key_exists("LogicalOperator", $trigger) || !array_key_exists("TriggerParts", $trigger) || !is_array($trigger["TriggerParts"])) {
             return false;
         }
@@ -38,7 +38,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($triggerPart)) {
                     return false;
                 }
-                if ($this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList, $userAgent)) {
+                if ($this->evaluateTriggerPart($triggerPart, $currentPageUrl, $request)) {
                     return true;
                 }
             }
@@ -48,7 +48,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 if (!is_array($triggerPart)) {
                     return false;
                 }
-                if (!$this->evaluateTriggerPart($triggerPart, $currentPageUrl, $cookieList, $userAgent)) {
+                if (!$this->evaluateTriggerPart($triggerPart, $currentPageUrl, $request)) {
                     return false;
                 }
             }
@@ -56,7 +56,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
         }
     }
 
-    private function evaluateTriggerPart(array $triggerPart, $currentPageUrl, array $cookieList, $userAgent) {
+    private function evaluateTriggerPart(array $triggerPart, $currentPageUrl, $request) {
         if (!array_key_exists("ValidatorType", $triggerPart)) {
             return false;
         }
@@ -65,9 +65,11 @@ class IntegrationEvaluator implements IIntegrationEvaluator
             case "UrlValidator":
                 return UrlValidatorHelper::evaluate($triggerPart, $currentPageUrl);
             case "CookieValidator":
-                return CookieValidatorHelper::evaluate($triggerPart, $cookieList);
+                return CookieValidatorHelper::evaluate($triggerPart, $request->getCookieManager()->getCookieArray());
             case "UserAgentValidator":
-                return UserAgentValidatorHelper::evaluate($triggerPart, $userAgent);
+                return UserAgentValidatorHelper::evaluate($triggerPart, $request->getUserAgent());
+            case "HttpHeaderValidator":
+                return HttpHeaderValidatorHelper::evaluate($triggerPart, $request->getHeaderArray());
             default:
                 return false;
         }
@@ -150,6 +152,32 @@ class UserAgentValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $userAgent, 
+            $triggerPart["ValueToCompare"]);
+    }
+}
+
+class HttpHeaderValidatorHelper 
+{
+    public static function evaluate(array $triggerPart, array $headerList) {
+        if (!array_key_exists("Operator", $triggerPart) ||
+            !array_key_exists("IsNegative", $triggerPart) ||
+            !array_key_exists("IsIgnoreCase", $triggerPart) ||
+            !array_key_exists("ValueToCompare", $triggerPart) ||
+            !array_key_exists("HttpHeaderName", $triggerPart)) {
+            return false;
+        }
+
+        $headerValue = "";
+        $headerName = $triggerPart["HttpHeaderName"];
+        if ($headerName !== null && array_key_exists(strtolower($headerName), $headerList) && $headerList[strtolower($headerName)] !== null) {
+            $headerValue = $headerList[strtolower($headerName)];
+        }
+
+        return ComparisonOperatorHelper::evaluate(
+            $triggerPart["Operator"], 
+            $triggerPart["IsNegative"], 
+            $triggerPart["IsIgnoreCase"], 
+            $headerValue, 
             $triggerPart["ValueToCompare"]);
     }
 }
