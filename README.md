@@ -149,7 +149,7 @@ header("Pragma: no-cache");
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
 
-$eventConfig = new QueueIT\KnownUserV3\SDK\EventConfig();
+$eventConfig = new QueueIT\KnownUserV3\SDK\QueueEventConfig();
 $eventConfig->eventId = ""; // ID of the queue to use
 $eventConfig->queueDomain = "xxx.queue-it.net"; //Domian name of the queue - usually in the format [CustomerId].queue-it.net
 //$eventConfig->cookieDomain = ".my-shop.com"; //Optional - Domain name where the Queue-it session cookie should be saved
@@ -163,7 +163,7 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 try
 {
 	//Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByLocalEventConfig(getFullRequestUri(), 
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig(getFullRequestUri(), 
 			$queueittoken, $eventConfig, $customerID, $secretKey);
 
 	
