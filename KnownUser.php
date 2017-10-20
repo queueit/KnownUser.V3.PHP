@@ -30,6 +30,12 @@ class KnownUser
         }
         return KnownUser::$httpRequestProvider;
     }
+
+    public static function setHttpRequestProvider(IHttpRequestProvider $provider)
+    {
+        KnownUser::$httpRequestProvider = $provider;
+    }
+
     private static $debugInfoArray=NULL;
     public static function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey) {
         if (empty($eventId)) {
