@@ -61,11 +61,7 @@ the following method is all that is needed to validate that a user has been thro
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
 
-//Adding no cache headers to prevent browsers to cache requests
-header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-//end
+
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
@@ -83,6 +79,12 @@ try
 	
     if($result->doRedirect())
     {
+    	//Adding no cache headers to prevent browsers to cache requests
+	header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
+	header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+	header("Pragma: no-cache");
+	//end
+    
         //Send the user to the queue - either becuase hash was missing or becuase is was invalid
 		header('Location: '.$result->redirectUrl);
         die();
@@ -140,11 +142,7 @@ The following is an example of how to specify the configuration in code:
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
 
-//Adding no cache headers to prevent browsers to cache requests
-header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-//end
+
 
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
@@ -169,6 +167,11 @@ try
 	
     if($result->doRedirect())
     {
+    	//Adding no cache headers to prevent browsers to cache requests
+	header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
+	header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+	header("Pragma: no-cache");
+	//end
         //Send the user to the queue - either becuase hash was missing or becuase is was invalid
 		header('Location: '.$result->redirectUrl);
         die();
