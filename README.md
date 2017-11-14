@@ -65,7 +65,7 @@ require_once( __DIR__ .'KnownUser.php');
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
+$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
 
 $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
@@ -85,13 +85,13 @@ try
 	header("Pragma: no-cache");
 	//end
     
-        //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+        //Send the user to the queue - either because hash was missing or because it was invalid
 		header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
     {
-		//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+		//Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
 		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
 		die();
     }
@@ -145,7 +145,7 @@ require_once( __DIR__ .'KnownUser.php');
 
 
 $customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
+$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
 
 $eventConfig = new QueueIT\KnownUserV3\SDK\QueueEventConfig();
 $eventConfig->eventId = ""; // ID of the queue to use
@@ -172,13 +172,13 @@ try
 	header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 	header("Pragma: no-cache");
 	//end
-        //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+        //Send the user to the queue - either because hash was missing or because it was invalid
 		header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
     {
-		//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+		//Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
 		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
 		die();
     }
