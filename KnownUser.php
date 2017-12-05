@@ -30,12 +30,6 @@ class KnownUser
         }
         return KnownUser::$httpRequestProvider;
     }
-
-    public static function setHttpRequestProvider(IHttpRequestProvider $provider)
-    {
-        KnownUser::$httpRequestProvider = $provider;
-    }
-
     private static $debugInfoArray=NULL;
     public static function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey) {
         if (empty($eventId)) {
@@ -59,6 +53,7 @@ class KnownUser
             "QueueitToken"=> $queueitToken,
             "QueueConfig"=>$queueConfig != null ? $queueConfig->getString() : "NULL",
             "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+			KnownUser::logMoreRequestDetails($dic);
             KnownUser::doCookieLog($dic);
         }
         if (Utils::isNullOrEmptyString($customerId)) {
@@ -97,6 +92,7 @@ class KnownUser
             "QueueitToken"=> $queueitToken,
             "CancelConfig"=>$cancelConfig != null ? $cancelConfig->getString() : "NULL",
             "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+			KnownUser::logMoreRequestDetails($dic);
             KnownUser::doCookieLog($dic);
         }
 
@@ -130,6 +126,7 @@ class KnownUser
            "QueueitToken"=> $queueitToken,
            "PureUrl"=> $currentUrlWithoutQueueITToken,
            "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+		   KnownUser::logMoreRequestDetails($dic);
            KnownUser::doCookieLog($dic);
         }
         if (Utils::isNullOrEmptyString($currentUrlWithoutQueueITToken)) {
@@ -207,7 +204,18 @@ class KnownUser
         
     }
 
+	private static function logMoreRequestDetails(array &$debugInfos)
+	{
+		$allHeaders = KnownUser::getHttpRequestProvider()->getHeaderArray();
 
+		$debugInfos["ServerUtcTime"] = gmdate("Y-m-d\TH:i:s\Z");
+        $debugInfos["RequestIP"] = KnownUser::getHttpRequestProvider()->getUserHostAddress();
+        $debugInfos["RequestHttpHeader_Via"] = array_key_exists ('via', $allHeaders) ? $allHeaders['via'] : "";
+        $debugInfos["RequestHttpHeader_Forwarded"] = array_key_exists ('forwarded', $allHeaders) ? $allHeaders['forwarded'] : "";
+        $debugInfos["RequestHttpHeader_XForwardedFor"] = array_key_exists ('x-forwarded-for', $allHeaders) ? $allHeaders['x-forwarded-for'] : "";
+        $debugInfos["RequestHttpHeader_XForwardedHost"] = array_key_exists ('x-forwarded-host', $allHeaders) ? $allHeaders['x-forwarded-host'] : "";
+        $debugInfos["RequestHttpHeader_XForwardedProto"] = array_key_exists ('x-forwarded-proto', $allHeaders) ? $allHeaders['x-forwarded-proto'] : "";
+	}
 
     private static function doCookieLog(array $debugInfos)
     {  
@@ -272,6 +280,7 @@ class CookieManager implements ICookieManager
 interface  IHttpRequestProvider 
 {
     function getUserAgent();
+	function getUserHostAddress();
     function getCookieManager();
     function getAbsoluteUri();
     function getHeaderArray();
@@ -281,9 +290,17 @@ class HttpRequestProvider implements IHttpRequestProvider
 {
     private $cookieManager;
     private $allHeadersLowerCaseKeyArray;
-    function getUserAgent() {
-        return array_key_exists ('HTTP_USER_AGENT',$_SERVER) ? $_SERVER['HTTP_USER_AGENT'] : "";
+    
+	function getUserAgent() 
+	{
+        return array_key_exists('HTTP_USER_AGENT', $_SERVER) ? $_SERVER['HTTP_USER_AGENT'] : "";
     }
+
+	function getUserHostAddress()
+	{
+		return array_key_exists('REMOTE_ADDR', $_SERVER) ? $_SERVER['REMOTE_ADDR'] : "";
+	}
+
     function getCookieManager()
     {
         if($this->cookieManager==NULL)
