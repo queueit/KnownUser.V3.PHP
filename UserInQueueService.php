@@ -23,12 +23,14 @@ interface IUserInQueueService
         $eventId,
         $cookieValidityMinute,
         $cookieDomain,
-        $secretKey);       
+        $secretKey);    
+
+    public function getIgnoreActionResult();   
 }
 
 class UserInQueueService implements IUserInQueueService
 {
-    const SDK_VERSION = "3.3.2";
+    const SDK_VERSION = "3.4.0";
     private $userInQueueStateRepository;
 
     function __construct(IUserInQueueStateRepository $userInQueueStateRepository) {
@@ -178,5 +180,9 @@ class UserInQueueService implements IUserInQueueService
                 return new RequestValidationResult(ActionTypes::CancelAction,$cancelConfig->eventId,NULL,NULL);
             }
 
+        }
+        public function getIgnoreActionResult()
+        {
+            return new RequestValidationResult(ActionTypes::IgnoreAction, NULL,NULL,NULL);
         }
 }

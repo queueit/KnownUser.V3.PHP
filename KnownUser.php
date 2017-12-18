@@ -162,17 +162,46 @@ class KnownUser
 
                 if(!array_key_exists("ActionType",$matchedConfig) || $matchedConfig["ActionType"]== ActionTypes::QueueAction)
                 {
-                    
-                    $eventConfig = new QueueEventConfig();
-                    $targetUrl = "";
-                    $eventConfig->eventId = $matchedConfig["EventId"];
-                    $eventConfig->queueDomain = $matchedConfig["QueueDomain"];
-                    $eventConfig->layoutName = $matchedConfig["LayoutName"];
-                    $eventConfig->culture = $matchedConfig["Culture"];
-                    $eventConfig->cookieDomain = $matchedConfig["CookieDomain"];
-                    $eventConfig->extendCookieValidity = $matchedConfig["ExtendCookieValidity"];
-                    $eventConfig->cookieValidityMinute = $matchedConfig["CookieValidityMinute"];
-                    $eventConfig->version = $customerIntegration["Version"];
+
+                 return KnownUser::handleQueueAction($currentUrlWithoutQueueITToken, $queueitToken, 
+                                                            $customerIntegration, $customerId, $secretKey,
+                                                            $matchedConfig);
+                }
+                else if( $matchedConfig["ActionType"]== ActionTypes::CancelAction)
+                {
+                    return KnownUser::handleCancelAction($currentUrlWithoutQueueITToken, $queueitToken, 
+                                                            $customerIntegration, $customerId, $secretKey,
+                                                            $matchedConfig);
+                }
+                else //IgnoreAction
+                {
+                    $userInQueueService = KnownUser::getUserInQueueService();
+                    return $userInQueueService->getIgnoreActionResult();   
+                }
+        }
+        catch (\Exception $e) {
+                throw new KnownUserException("integrationConfiguration text was not valid: ". $e->getMessage());
+        }
+           
+        
+    }
+
+    private  static  function handleQueueAction(
+        $currentUrlWithoutQueueITToken, $queueitToken, 
+        $customerIntegration, $customerId, 
+        $secretKey,
+        $matchedConfig)
+    {
+        $eventConfig = new QueueEventConfig();
+        $targetUrl = "";
+        $eventConfig->eventId = $matchedConfig["EventId"];
+        $eventConfig->queueDomain = $matchedConfig["QueueDomain"];
+        $eventConfig->layoutName = $matchedConfig["LayoutName"];
+        $eventConfig->culture = $matchedConfig["Culture"];
+        $eventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $eventConfig->extendCookieValidity = $matchedConfig["ExtendCookieValidity"];
+        $eventConfig->cookieValidityMinute = $matchedConfig["CookieValidityMinute"];
+        $eventConfig->version = $customerIntegration["Version"];
 
                     switch ($matchedConfig["RedirectLogic"]) {
                         case "ForcedTargetUrl":
@@ -187,23 +216,20 @@ class KnownUser
                 }
                  return KnownUser::resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
                 }
-                else //cancel action
-                {
+
+    private  static  function handleCancelAction(
+        $currentUrlWithoutQueueITToken, $queueitToken, 
+        $customerIntegration, $customerId, 
+        $secretKey,
+        $matchedConfig)
+    {
                     $cancelEventConfig = new CancelEventConfig();
                     $cancelEventConfig->eventId = $matchedConfig["EventId"];
                     $cancelEventConfig->queueDomain = $matchedConfig["QueueDomain"];
                     $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
                     $cancelEventConfig->version = $customerIntegration["Version"];
-                   return KnownUser::cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey);
-                }
-        }
-             catch (\Exception $e) {
-                throw new KnownUserException("integrationConfiguration text was not valid: ". $e->getMessage());
-            }
-           
-        
+                   return KnownUser::cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey);      
     }
-
 	private static function logMoreRequestDetails(array &$debugInfos)
 	{
 		$allHeaders = KnownUser::getHttpRequestProvider()->getHeaderArray();

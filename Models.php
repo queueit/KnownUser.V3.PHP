@@ -67,5 +67,6 @@ class ActionTypes
 {
     const QueueAction="Queue" ;
     const CancelAction="Cancel" ;
+    const IgnoreAction="Ignore" ;
     
 }

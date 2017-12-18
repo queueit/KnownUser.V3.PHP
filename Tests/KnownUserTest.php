@@ -10,7 +10,7 @@ class CookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
 {
     public $debugInfoCookie;
     public $cookieArray;
-    public $headerArray;
+    
     public function getCookie($cookieName) {
         return $this->debugInfoCookie;
     }
@@ -30,11 +30,17 @@ class CookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
 class HttpRequestProviderMock implements QueueIT\KnownUserV3\SDK\IHttpRequestProvider
 {
     public $userAgent;
+	public $userHostAddress;
     public $cookieManager;
     public $absoluteUri;
+	public $headerArray;
+
     public function getUserAgent() {
         return $this->userAgent;
     }
+	public function getUserHostAddress() {
+		return $this->userHostAddress;
+	}
     public function getCookieManager() {
         return $this->cookieManager;
     }
@@ -54,11 +60,13 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
     public $arrayReturns;
     public $validateCancelRequestResult;
 
+
     function __construct() {
         $this->arrayFunctionCallsArgs = array(
             'validateRequest' => array(),
             'extendQueueCookie' => array(),
-            'validateCancelRequest' => array()
+            'validateCancelRequest' => array(),
+            'getIgnoreActionResult'=>array()
         );
 
         $this->arrayReturns = array(
@@ -86,6 +94,11 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
                 $customerId,
                 $secretKey));
                 return $this->validateCancelRequestResult;
+        }
+
+    public function getIgnoreActionResult() {
+            array_push($this->arrayFunctionCallsArgs['getIgnoreActionResult'], "call");
+            return new QueueIT\KnownUserV3\SDK\RequestValidationResult( QueueIT\KnownUserV3\SDK\ActionTypes::IgnoreAction,NULL,NULL,NULL);;
         }
 
     public function extendQueueCookie(
@@ -768,6 +781,55 @@ EOT;
 		$this->assertTrue("3"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
 	}
 
+    function test_validateRequestByIntegrationConfig_IgnoreAction() 
+    {
+		$userInQueueservice = new UserInQueueServiceMock();
+		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+		$r->setAccessible(true);
+		$r->setValue(null, $userInQueueservice);
+
+
+		$var = "some text";
+		$integrationConfigString = <<<EOT
+			{
+				"Description": "test",
+				"Integrations": [
+				{
+					"Name": "event1action",
+					"EventId": "event1",
+					"CookieDomain": ".test.com",
+					"ActionType":"Ignore",
+					"Triggers": [
+					{
+						"TriggerParts": [
+						{
+							"Operator": "Contains",
+							"ValueToCompare": "event1",
+							"UrlPart": "PageUrl",
+							"ValidatorType": "UrlValidator",
+							"IsNegative": false,
+							"IsIgnoreCase": true
+						}
+						],
+						"LogicalOperator": "And"
+					}
+					],
+					"QueueDomain": "knownusertest.queue-it.net"
+				}
+				],
+				"CustomerId": "knownusertest",
+				"AccountId": "knownusertest",
+				"Version": 3,
+				"PublishDate": "2017-05-15T21:39:12.0076806Z",
+				"ConfigDataVersion": "1.0.0.1"
+			}
+EOT;
+
+		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+		$this->assertTrue($result->actionType =="Ignore");
+		$this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['getIgnoreActionResult']) == 1);
+    }
+    
 	function test_validateRequestByIntegrationConfig_debug() 
 	{
 		$userInQueueservice = new UserInQueueServiceMock();
@@ -777,6 +839,13 @@ EOT;
 
 		$httpRequestProvider = new HttpRequestProviderMock();
 		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->userHostAddress ="userIP";
+		$httpRequestProvider->headerArray = array(
+			"via" => "v", 
+			"forwarded" => "f", 
+			"x-forwarded-for" => "xff", 
+			"x-forwarded-host" => "xfh", 
+			"x-forwarded-proto" => "xfp");
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);
@@ -819,15 +888,26 @@ EOT;
 			}
 EOT;
 		$token = $this->generateHashDebugValidHash("secretkey");
+		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
 		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true&queueittoken=". $this->generateHashDebugValidHash("secretkey"), 
 						$token , $integrationConfigString, "customerid", "secretkey");
                
-		$expectedCookie= "TargetUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-		."|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-		."|CancelConfig=EventId:event1&Version:3&QueueDomain:knownusertest.queue-it.net&CookieDomain:.test.com"
-		."|OriginalUrl=OriginalURL|MatchedConfig=event1action|ConfigVersion=3"
-		."|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce";
-
+		$expectedCookie= 
+		"TargetUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|CancelConfig=EventId:event1&Version:3&QueueDomain:knownusertest.queue-it.net&CookieDomain:.test.com".
+		"|OriginalUrl=OriginalURL".
+		"|ServerUtcTime=".$timestamp.
+		"|RequestIP=userIP".
+		"|RequestHttpHeader_Via=v".
+		"|RequestHttpHeader_Forwarded=f".
+		"|RequestHttpHeader_XForwardedFor=xff".
+		"|RequestHttpHeader_XForwardedHost=xfh".
+		"|RequestHttpHeader_XForwardedProto=xfp".
+		"|MatchedConfig=event1action".
+		"|ConfigVersion=3".
+		"|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce";
+		
 		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==$expectedCookie );
 	}
 
@@ -887,14 +967,26 @@ EOT;
 			"ConfigDataVersion": "1.0.0.1"
 		}
 EOT;
+	
 		$token = $this->generateHashDebugValidHash("secretkey");
+		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
 		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true&queueittoken=". $this->generateHashDebugValidHash("secretkey"), 
 						$token , $integrationConfigString, "customerid", "secretkey");
 
 		$expectedCookie= 
-		"MatchedConfig=NULL|ConfigVersion=3|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-		 ."|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-		 ."|OriginalUrl=OriginalURL";
+		"MatchedConfig=NULL".
+		"|ConfigVersion=3".
+		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|OriginalUrl=OriginalURL".
+		"|ServerUtcTime=".$timestamp.
+		"|RequestIP=".
+		"|RequestHttpHeader_Via=".
+		"|RequestHttpHeader_Forwarded=".
+		"|RequestHttpHeader_XForwardedFor=".
+		"|RequestHttpHeader_XForwardedHost=".
+		"|RequestHttpHeader_XForwardedProto=";
+
 		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==$expectedCookie );
 	}
 
@@ -966,6 +1058,13 @@ EOT;
 		$r->setAccessible(true);
 		$r->setValue(null, $userInQueueservice);
 		$httpRequestProvider = new HttpRequestProviderMock();
+		$httpRequestProvider->userHostAddress ="userIP";
+		$httpRequestProvider->headerArray = array(
+			"via" => "v", 
+			"forwarded" => "f", 
+			"x-forwarded-for" => "xff", 
+			"x-forwarded-host" => "xfh", 
+			"x-forwarded-proto" => "xfp");
 		$httpRequestProvider->cookieManager = new CookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
@@ -986,12 +1085,23 @@ EOT;
 		$eventconfig->cookieValidityMinute = 10;
 		$eventconfig->version = 12;
 
-		$expectedCookie= "TargetUrl=targeturl|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-			."|QueueConfig=EventId:eventId&Version:12&QueueDomain:queueDomain&CookieDomain:cookieDomain&ExtendCookieValidity:1&CookieValidityMinute:10"
-			."&LayoutName:layoutName&Culture:culture|OriginalUrl=OriginalURL";
 		$token = $this->generateHashDebugValidHash("secretkey");
+		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
 		QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", $token, $eventconfig, "customerid", "secretkey");
 
+		$expectedCookie= 
+		"TargetUrl=targeturl".
+		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|QueueConfig=EventId:eventId&Version:12&QueueDomain:queueDomain&CookieDomain:cookieDomain&ExtendCookieValidity:1&CookieValidityMinute:10&LayoutName:layoutName&Culture:culture".
+		"|OriginalUrl=OriginalURL".
+		"|ServerUtcTime=".$timestamp.
+		"|RequestIP=userIP".
+		"|RequestHttpHeader_Via=v".
+		"|RequestHttpHeader_Forwarded=f".
+		"|RequestHttpHeader_XForwardedFor=xff".
+		"|RequestHttpHeader_XForwardedHost=xfh".
+		"|RequestHttpHeader_XForwardedProto=xfp";
+		
 		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie );
 	}
 
@@ -1001,6 +1111,13 @@ EOT;
 		$r->setAccessible(true);
 		$r->setValue(null, $userInQueueservice);
 		$httpRequestProvider = new HttpRequestProviderMock();
+		$httpRequestProvider->userHostAddress ="userIP";
+		$httpRequestProvider->headerArray = array(
+			"via" => "v", 
+			"forwarded" => "f", 
+			"x-forwarded-for" => "xff", 
+			"x-forwarded-host" => "xfh", 
+			"x-forwarded-proto" => "xfp");
 		$httpRequestProvider->cookieManager = new CookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
@@ -1016,11 +1133,24 @@ EOT;
 		$cancelEventconfig->eventId = "eventid";
 		$cancelEventconfig->queueDomain = "queuedomain";
 		$cancelEventconfig->version = 1;
-		$expectedCookie= "TargetUrl=targeturl|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce"
-		."|CancelConfig=EventId:eventid&Version:1&QueueDomain:queuedomain&CookieDomain:cookiedomain|OriginalUrl=OriginalURL";
-
+		
 		$token = $this->generateHashDebugValidHash("secretkey");
+		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
 		QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("targeturl", $token, $cancelEventconfig, "customerid", "secretkey");
+		
+		$expectedCookie= 
+		"TargetUrl=targeturl".
+		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
+		"|CancelConfig=EventId:eventid&Version:1&QueueDomain:queuedomain&CookieDomain:cookiedomain".
+		"|OriginalUrl=OriginalURL".
+		"|ServerUtcTime=".$timestamp.
+		"|RequestIP=userIP".
+		"|RequestHttpHeader_Via=v".
+		"|RequestHttpHeader_Forwarded=f".
+		"|RequestHttpHeader_XForwardedFor=xff".
+		"|RequestHttpHeader_XForwardedHost=xfh".
+		"|RequestHttpHeader_XForwardedProto=xfp";
+		
 		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie );
 	}
 	

@@ -83,7 +83,6 @@ class UrlValidatorHelper
                 !array_key_exists("Operator", $triggerPart) ||
                 !array_key_exists("IsNegative", $triggerPart) ||
                 !array_key_exists("IsIgnoreCase", $triggerPart) ||
-                !array_key_exists("ValueToCompare", $triggerPart) ||
                 !array_key_exists("UrlPart", $triggerPart)) {
             return false;
         }
@@ -93,7 +92,8 @@ class UrlValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             UrlValidatorHelper::GetUrlPart($triggerPart["UrlPart"], $url), 
-            $triggerPart["ValueToCompare"]);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
     }
 
     private static function GetUrlPart($urlPart, $url) {
@@ -117,7 +117,6 @@ class CookieValidatorHelper
         if (!array_key_exists("Operator", $triggerPart) ||
             !array_key_exists("IsNegative", $triggerPart) ||
             !array_key_exists("IsIgnoreCase", $triggerPart) ||
-            !array_key_exists("ValueToCompare", $triggerPart) ||
             !array_key_exists("CookieName", $triggerPart)) {
             return false;
         }
@@ -133,7 +132,8 @@ class CookieValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $cookieValue, 
-            $triggerPart["ValueToCompare"]);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
     }
 }
 
@@ -142,8 +142,7 @@ class UserAgentValidatorHelper
     public static function evaluate(array $triggerPart, $userAgent) {
         if (!array_key_exists("Operator", $triggerPart) ||
             !array_key_exists("IsNegative", $triggerPart) ||
-            !array_key_exists("IsIgnoreCase", $triggerPart) ||
-            !array_key_exists("ValueToCompare", $triggerPart) ) {
+            !array_key_exists("IsIgnoreCase", $triggerPart) ) {
             return false;
         }
 
@@ -152,7 +151,8 @@ class UserAgentValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $userAgent, 
-            $triggerPart["ValueToCompare"]);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
     }
 }
 
@@ -162,7 +162,6 @@ class HttpHeaderValidatorHelper
         if (!array_key_exists("Operator", $triggerPart) ||
             !array_key_exists("IsNegative", $triggerPart) ||
             !array_key_exists("IsIgnoreCase", $triggerPart) ||
-            !array_key_exists("ValueToCompare", $triggerPart) ||
             !array_key_exists("HttpHeaderName", $triggerPart)) {
             return false;
         }
@@ -178,42 +177,47 @@ class HttpHeaderValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $headerValue, 
-            $triggerPart["ValueToCompare"]);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
     }
 }
 
 class ComparisonOperatorHelper 
 {
-    public static function evaluate($opt, $isNegative, $isIgnoreCase, $left, $right) {
-        $left = !is_null($left) ? $left : "";
-        $right = !is_null($right) ? $right : "";
-
+    public static function evaluate($opt, $isNegative, $isIgnoreCase, $value, $valueToCompare, $valuesToCompare) {
+        $value = !is_null($value) ? $value : "";
+        $valueToCompare = !is_null($valueToCompare) ? $valueToCompare : "";
+        $valuesToCompare = is_array($valuesToCompare) ? $valuesToCompare : array();
         switch ($opt) {
             case "Equals":
-                return ComparisonOperatorHelper::equals($left, $right, $isNegative, $isIgnoreCase);
+                return ComparisonOperatorHelper::equals($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "Contains":
-                return ComparisonOperatorHelper::contains($left, $right, $isNegative, $isIgnoreCase);
+                return ComparisonOperatorHelper::contains($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "StartsWith":
-                return ComparisonOperatorHelper::startsWith($left, $right, $isNegative, $isIgnoreCase);
+                return ComparisonOperatorHelper::startsWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "EndsWith":
-                return ComparisonOperatorHelper::endsWith($left, $right, $isNegative, $isIgnoreCase);
+                return ComparisonOperatorHelper::endsWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "MatchesWith":
-                return ComparisonOperatorHelper::matchesWith($left, $right, $isNegative, $isIgnoreCase);
+                return ComparisonOperatorHelper::matchesWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
+            case "EqualsAny":
+                return ComparisonOperatorHelper::equalsAny($value, $valuesToCompare, $isNegative, $isIgnoreCase);
+            case "ContainsAny":
+                return ComparisonOperatorHelper::containsAny($value, $valuesToCompare, $isNegative, $isIgnoreCase);
             default:
                 return false;
         }
     }
 
-    private static function contains($left, $right, $isNegative, $ignoreCase) {
-        if ($right === "*") {
+    private static function contains($value, $valueToCompare, $isNegative, $ignoreCase) {
+        if ($valueToCompare === "*") {
             return true;
         }
 
         if ($ignoreCase) {
-            $left = strtoupper($left);
-            $right = strtoupper($right);
+            $value = strtoupper($value);
+            $valueToCompare = strtoupper($valueToCompare);
         }
-        $evaluation = strpos($left, $right) !== false;
+        $evaluation = strpos($value, $valueToCompare) !== false;
         if ($isNegative) {
             return !$evaluation;
         } else {
@@ -221,12 +225,12 @@ class ComparisonOperatorHelper
         }
     }
 
-    private static function equals($left, $right, $isNegative, $ignoreCase) {
+    private static function equals($value, $valueToCompare, $isNegative, $ignoreCase) {
         if ($ignoreCase) {
-            $left = strtoupper($left);
-            $right = strtoupper($right);
+            $value = strtoupper($value);
+            $valueToCompare = strtoupper($valueToCompare);
         }
-        $evaluation = $left === $right;
+        $evaluation = $value === $valueToCompare;
 
         if ($isNegative) {
             return !$evaluation;
@@ -234,18 +238,36 @@ class ComparisonOperatorHelper
             return $evaluation;
         }
     }
+    
+    private static function equalsAny($value,array $valuesToCompare, $isNegative, $ignoreCase) {
+        foreach($valuesToCompare as $vToCompare)
+        {
+            if(ComparisonOperatorHelper::equals($value,$vToCompare,false,$ignoreCase))
+                return !$isNegative;
+        }
+        return $isNegative;
+    }
 
-    private static function endsWith($left, $right, $isNegative, $ignoreCase) {
+    private static function containsAny($value,array $valuesToCompare, $isNegative, $ignoreCase) {
+        foreach($valuesToCompare as $vToCompare)
+        {
+            if(ComparisonOperatorHelper::contains($value,$vToCompare,false,$ignoreCase))
+                return !$isNegative;
+        }
+        return $isNegative;
+    }
+
+    private static function endsWith($value, $valueToCompare, $isNegative, $ignoreCase) {
         if ($ignoreCase) {
-            $left = strtoupper($left);
-            $right = strtoupper($right);
+            $value = strtoupper($value);
+            $valueToCompare = strtoupper($valueToCompare);
         }
         $evaluation = false;
-        $rLength = strlen($right);
+        $rLength = strlen($valueToCompare);
         if ($rLength === 0) {
             $evaluation = true;
         } else {
-            $evaluation = substr($left, -$rLength) === $right;
+            $evaluation = substr($value, -$rLength) === $valueToCompare;
         }
 
         if ($isNegative) {
@@ -255,15 +277,15 @@ class ComparisonOperatorHelper
         }
     }
 
-    private static function startsWith($left, $right, $isNegative, $ignoreCase) {
+    private static function startsWith($value, $valueToCompare, $isNegative, $ignoreCase) {
         if ($ignoreCase) {
-            $left = strtoupper($left);
-            $right = strtoupper($right);
+            $value = strtoupper($value);
+            $valueToCompare = strtoupper($valueToCompare);
         }
         $evaluation = false;
 
-        $rLength = strlen($right);
-        $evaluation = (substr($left, 0, $rLength) === $right);
+        $rLength = strlen($valueToCompare);
+        $evaluation = (substr($value, 0, $rLength) === $valueToCompare);
 
         if ($isNegative) {
             return !$evaluation;
@@ -272,13 +294,13 @@ class ComparisonOperatorHelper
         }
     }
 
-    private static function matchesWith($left, $right, $isNegative, $ignoreCase) {
+    private static function matchesWith($value, $valueToCompare, $isNegative, $ignoreCase) {
         if ($ignoreCase) {
-            $left = strtoupper($left);
-            $right = strtoupper($right);
+            $value = strtoupper($value);
+            $valueToCompare = strtoupper($valueToCompare);
         }
 
-        if (preg_match($right, $left)) {
+        if (preg_match($valueToCompare, $value)) {
             $evaluation = true;
         } else {
             $evaluation = false;

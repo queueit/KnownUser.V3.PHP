@@ -386,12 +386,21 @@ class UserInQueueServiceTest extends UnitTestCase
 
         $this->assertTrue($result->redirectUrl == $expectedUrl);
     }
+    public function test_getIgnoreActionResult() {
+        $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService(new UserInQueueStateRepositoryMockClass ());
+        $result = $testObject->getIgnoreActionResult();
 
+        $this->assertFalse($result->doRedirect());
+        $this->assertTrue($result->eventId == NULL);
+        $this->assertTrue($result->queueId == NULL);
+        $this->assertTrue($result->redirectUrl == NULL);
+        $this->assertTrue($result->actionType == "Ignore");
+        
+    }
     public function generateHash($eventId,$queueId ,$timestamp, $extendableCookie, $cookieValidityMinute, $secretKey) {
         $token = 'e_' . $eventId . '~ts_' . $timestamp . '~ce_' . $extendableCookie. '~q_'. $queueId;
         if (isset($cookieValidityMinute))
             $token = $token . '~cv_' . $cookieValidityMinute;
-
         return $token . '~h_' . hash_hmac('sha256', $token, $secretKey);
     }
 }
