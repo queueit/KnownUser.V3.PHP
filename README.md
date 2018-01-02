@@ -124,9 +124,6 @@ So if your webserver is e.g. behind a load balancer that modifies the host name 
  }
 ```
 
-## Installation
-Copy the files: KnownUser.php, Models.php, UserInQueueService.php, UserInQueueStateCookieRepository.php, QueueITHelpers.php and IntegrationConfigHelpers.php
-
 
 ## Alternative Implementation
 If your application server (maybe due to security reasons) is not allowed to do external GET requests, then you have three options:
