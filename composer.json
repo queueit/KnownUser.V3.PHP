@@ -6,8 +6,7 @@
     },
     "license":"LGPL-3.0",
     "autoload": {
-        "psr-4": {
-            "QueueIT\\": ""
-        }
+        "classmap": ["./"],
+        "exclude-from-classmap": ["/Tests/"]
     }
 }
