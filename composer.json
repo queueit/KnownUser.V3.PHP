@@ -7,6 +7,6 @@
     "license":"LGPL-3.0",
     "autoload": {
         "classmap": ["./"],
-        "exclude-from-classmap": ["/Tests/"]
+        "exclude-from-classmap": ["**/Tests/**","**/tests/**"]
     }
 }
