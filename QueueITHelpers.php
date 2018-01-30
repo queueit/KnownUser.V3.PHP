@@ -6,7 +6,7 @@ class QueueUrlParams {
 
     const TimeStampKey = "ts";
     const ExtendableCookieKey = "ce";
-    const CookieValidityMinuteKey = "cv";
+    const CookieValidityMinutesKey = "cv";
     const HashKey = "h";
     const EventIdKey = "e";
     const QueueIdKey = "q";
@@ -18,7 +18,7 @@ class QueueUrlParams {
     public $eventId = "";
     public $hashCode = "";
     public $extendableCookie = false;
-    public $cookieValidityMinute = null;
+    public $cookieValidityMinutes = null;
     public $queueITToken = "";
     public $queueITTokenWithoutHash = "";
     public $queueId = "";
@@ -42,9 +42,9 @@ class QueueUrlParams {
                         }
                         break;
                     }
-                case QueueUrlParams::CookieValidityMinuteKey: {
+                case QueueUrlParams::CookieValidityMinutesKey: {
                         if (is_numeric($paramNameValueArr[1])) {
-                            $result->cookieValidityMinute = intval($paramNameValueArr[1]);
+                            $result->cookieValidityMinutes = intval($paramNameValueArr[1]);
                         }
                         break;
                     }

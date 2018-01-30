@@ -7,6 +7,7 @@ class Utils
     return (!isset($value) || trim($value)==='');
     }
 }
+
 class QueueEventConfig
 {
     public $eventId;
@@ -23,7 +24,6 @@ class QueueEventConfig
             ."&QueueDomain:".$this->queueDomain ."&CookieDomain:".$this->cookieDomain. "&ExtendCookieValidity:".$this->extendCookieValidity
             ."&CookieValidityMinute:" .$this->cookieValidityMinute."&LayoutName:".$this->layoutName."&Culture:".$this->culture;
     }
-
 }
 
 class CancelEventConfig
@@ -38,18 +38,21 @@ class CancelEventConfig
             ."&QueueDomain:".$this->queueDomain ."&CookieDomain:".$this->cookieDomain;
     }
 }
+
 class RequestValidationResult
 {     
     public $eventId;
     public $redirectUrl;
     public $queueId;
     public $actionType;
+	public $redirectType;
 
-    function __construct($actionType ,$eventId, $queueId, $redirectUrl) {
-       $this->actionType= $actionType;
-       $this->eventId= $eventId;
-       $this->queueId= $queueId;
+    function __construct($actionType, $eventId, $queueId, $redirectUrl, $redirectType) {
+       $this->actionType = $actionType;
+       $this->eventId = $eventId;
+       $this->queueId = $queueId;
        $this->redirectUrl = $redirectUrl;
+	   $this->redirectType = $redirectType;
     }
 
     public function doRedirect() {
@@ -63,6 +66,7 @@ class KnownUserException extends \Exception
         parent::__construct($message, $code);
     }
 }
+
 class ActionTypes
 {
     const QueueAction="Queue" ;

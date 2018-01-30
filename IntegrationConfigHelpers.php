@@ -10,7 +10,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
 {
     public function getMatchedIntegrationConfig(array $customerIntegration, $currentPageUrl, $request) {
         if (!array_key_exists("Integrations", $customerIntegration) || !is_array($customerIntegration["Integrations"])) {
-            return NULL;
+            return null;
         }
         foreach ($customerIntegration["Integrations"] as $integrationConfig) {
             if (!is_array($integrationConfig) || !array_key_exists("Triggers", $integrationConfig) || !is_array($integrationConfig["Triggers"])) {
@@ -26,7 +26,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 }
             }
         }
-        return NULL;
+        return null;
     }
 
     private function evaluateTrigger(array $trigger, $currentPageUrl, $request) {
@@ -92,8 +92,8 @@ class UrlValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             UrlValidatorHelper::GetUrlPart($triggerPart["UrlPart"], $url), 
-            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
-            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
     }
 
     private static function GetUrlPart($urlPart, $url) {
@@ -132,8 +132,8 @@ class CookieValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $cookieValue, 
-            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
-            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
     }
 }
 
@@ -151,8 +151,8 @@ class UserAgentValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $userAgent, 
-            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
-            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
     }
 }
 
@@ -177,8 +177,8 @@ class HttpHeaderValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $headerValue, 
-            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: NULL,
-            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: NULL);
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
     }
 }
 

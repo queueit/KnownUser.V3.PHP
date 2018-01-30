@@ -1,12 +1,14 @@
 <?php
 namespace QueueIT\KnownUserV3\SDK;
 
+require_once('Models.php');
+
 interface IUserInQueueStateRepository 
 {
-    public function store($eventId, $queueId, $isStateExtendable, $cookieValidityMinute, $cookieDomain, $customerSecretKey);
-    public function getState($eventId, $secretKey);
+    public function store($eventId, $queueId, $fixedCookieValidityMinutes, $cookieDomain, $redirectType, $secretKey);
+    public function getState($eventId, $cookieValidityMinutes, $secretKey, $validateTime);
     public function cancelQueueCookie($eventId, $cookieDomain);
-    public function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey);
+    public function reissueQueueCookie($eventId, $cookieValidityMinutes, $cookieDomain, $secretKey);
 }
 
 interface ICookieManager 
@@ -34,30 +36,31 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
         return self::_QueueITDataKey . '_' . $eventId;
     }
 
-    public function store($eventId, $queueId, $isStateExtendable, $cookieValidityMinute, $cookieDomain, $secretKey) {
+    public function store($eventId, $queueId, $fixedCookieValidityMinutes, $cookieDomain, $redirectType, $secretKey) {
         $cookieKey = self::getCookieKey($eventId);
-        $expirationTime = strval(time() + ($cookieValidityMinute * 60));
-        $isStateExtendableString = ($isStateExtendable) ? 'true' : 'false';
-        $cookieValue = $this->createCookieValue($queueId, $isStateExtendableString, $expirationTime, $secretKey);
+        $cookieValue = $this->createCookieValue($eventId, $queueId, strval($fixedCookieValidityMinutes), $redirectType, $secretKey);
         $this->cookieManager->setCookie($cookieKey, $cookieValue, time() + (24 * 60 * 60), $cookieDomain);
     }
 
-    private function createCookieValue($queueId, $isStateExtendable, $expirationTime, $secretKey) {
-        $hashValue = hash_hmac('sha256', $queueId . $isStateExtendable . $expirationTime, $secretKey);
-        $cookieValue = "QueueId=" . $queueId . "&IsCookieExtendable=" . $isStateExtendable . "&" . "Expires=" . $expirationTime . "&" . "Hash=" . $hashValue;
-
+    private function createCookieValue($eventId, $queueId, $fixedCookieValidityMinutes, $redirectType, $secretKey) {
+        $issueTime = time();
+		$hashValue = $this->generateHash($eventId, $queueId, $fixedCookieValidityMinutes, $redirectType, $issueTime, $secretKey);
+		
+		$fixedCookieValidityMinutesPart = "";
+		if(!Utils::isNullOrEmptyString($fixedCookieValidityMinutes)) {
+			$fixedCookieValidityMinutesPart = "&FixedValidityMins=" . $fixedCookieValidityMinutes;
+		}
+		
+		$cookieValue = "EventId=" . $eventId . "&QueueId=" . $queueId . $fixedCookieValidityMinutesPart . "&RedirectType=" . $redirectType . "&IssueTime=" . $issueTime . "&Hash=" . $hashValue;		
         return $cookieValue;
     }
 
     private function getCookieNameValueMap($cookieValue) {
         $result = array();
         $cookieNameValues = explode("&", $cookieValue);
+		$length = count($cookieNameValues);
 
-        if (count($cookieNameValues) < 4) {
-            return $result;
-        }
-
-        for ($i = 0; $i < 4; ++$i) {
+        for ($i = 0; $i < $length; ++$i) {
             $arr = explode("=", $cookieNameValues[$i]);
             if (count($arr) == 2) {
                 $result[$arr[0]] = $arr[1];
@@ -67,62 +70,111 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
         return $result;
     }
 
-    private function isCookieValid(array $cookieNameValueMap, $secretKey) {
-        if (!array_key_exists("IsCookieExtendable",$cookieNameValueMap)) {
+	private function generateHash($eventId, $queueId, $fixedCookieValidityMinutes, $redirectType, $issueTime, $secretKey) {
+		return hash_hmac('sha256', $eventId . $queueId . $fixedCookieValidityMinutes . $redirectType . $issueTime, $secretKey);
+	}
+
+    private function isCookieValid($secretKey, array $cookieNameValueMap, $eventId, $cookieValidityMinutes, $validateTime) {
+        if (!array_key_exists("EventId", $cookieNameValueMap)) {
             return false;
         }
-        if (!array_key_exists("Expires",$cookieNameValueMap)) {
+   
+		if (!array_key_exists("QueueId", $cookieNameValueMap)) {
             return false;
         }
-        if (!array_key_exists("Hash",$cookieNameValueMap)) {
+		if (!array_key_exists("RedirectType", $cookieNameValueMap)) {
             return false;
         }
-        if (!array_key_exists("QueueId",$cookieNameValueMap)) {
+		if (!array_key_exists("IssueTime", $cookieNameValueMap)) {
             return false;
         }
-        $hashValue = hash_hmac('sha256', $cookieNameValueMap["QueueId"] . $cookieNameValueMap["IsCookieExtendable"] . $cookieNameValueMap["Expires"], $secretKey);
+
+		if (!array_key_exists("Hash", $cookieNameValueMap)) {
+			return false;
+        }
+
+		$fixedCookieValidityMinutes = "";
+		if (array_key_exists("FixedValidityMins", $cookieNameValueMap)) {
+            $fixedCookieValidityMinutes = $cookieNameValueMap["FixedValidityMins"];
+        }
+
+        $hashValue = $this->generateHash(
+			$cookieNameValueMap["EventId"], 
+			$cookieNameValueMap["QueueId"],
+			$fixedCookieValidityMinutes,
+			$cookieNameValueMap["RedirectType"],
+			$cookieNameValueMap["IssueTime"],
+			$secretKey);
 
         if ($hashValue !== $cookieNameValueMap["Hash"]) {
             return false;
         }
 
-        if (intval($cookieNameValueMap["Expires"]) < time()) {
-            return false;
+        if(strtolower($eventId) !== strtolower($cookieNameValueMap["EventId"])) {
+			return false;
+		}     
+
+		if($validateTime) {
+			$validity = $cookieValidityMinutes;
+			if(!Utils::isNullOrEmptyString($fixedCookieValidityMinutes)) {
+				$validity = intval($fixedCookieValidityMinutes);
+			}
+
+			$expirationTime = $cookieNameValueMap["IssueTime"] + ($validity*60);
+			if($expirationTime < time()) {
+				return false;
+			}
         }
 
         return true;
     }
 
-    public function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey) {
+    public function reissueQueueCookie($eventId, $cookieValidityMinutes, $cookieDomain, $secretKey) {
         $cookieKey = self::getCookieKey($eventId);
         if ($this->cookieManager->getCookie($cookieKey) === null) {
             return;
         }
         $cookieNameValueMap = $this->getCookieNameValueMap($this->cookieManager->getCookie($cookieKey));
-        if (!$this->isCookieValid($cookieNameValueMap, $secretKey)) {
+        if (!$this->isCookieValid($secretKey, $cookieNameValueMap, $eventId, $cookieValidityMinutes, true)) {
             return;
         }
+		$fixedCookieValidityMinutes = "";
+		if (array_key_exists("FixedValidityMins", $cookieNameValueMap)) {
+            $fixedCookieValidityMinutes = $cookieNameValueMap["FixedValidityMins"];
+        }
 
-        $expirationTime = strval(time() + ( $cookieValidityMinute * 60));
-        $cookieValue = $this->createCookieValue($cookieNameValueMap["QueueId"],$cookieNameValueMap["IsCookieExtendable"], $expirationTime, $secretKey);
-        $this->cookieManager->setCookie($cookieKey, $cookieValue, time() + (24 * 60 * 60), $cookieDomain);
+        $cookieValue = $this->createCookieValue(
+			$eventId, 
+			$cookieNameValueMap["QueueId"], 
+			$fixedCookieValidityMinutes, 
+			$cookieNameValueMap["RedirectType"], 
+			$secretKey);
+        
+		$this->cookieManager->setCookie($cookieKey, $cookieValue, time() + (24 * 60 * 60), $cookieDomain);
     }
 
-    public function getState($eventId, $secretKey) {
+    public function getState($eventId, $cookieValidityMinutes, $secretKey, $validateTime) {
         $cookieKey = self::getCookieKey($eventId);
         if ($this->cookieManager->getCookie($cookieKey) === null) {
-            return new StateInfo(FALSE, null, FALSE,0);
+            return new StateInfo(false, null, null, null);
         }
         $cookieNameValueMap = $this->getCookieNameValueMap($this->cookieManager->getCookie($cookieKey));
 
-        if (!$this->isCookieValid($cookieNameValueMap, $secretKey)) {
-            return new StateInfo(FALSE, null, FALSE,0);
+        if (!$this->isCookieValid($secretKey, $cookieNameValueMap, $eventId, $cookieValidityMinutes, $validateTime)) {
+            return new StateInfo(false, null, null, null);
         }
+
+		$fixedCookieValidityMinutes = null;
+		if (array_key_exists("FixedValidityMins", $cookieNameValueMap)) {
+            $fixedCookieValidityMinutes = intval($cookieNameValueMap["FixedValidityMins"]);
+        }
+
         return new StateInfo(
-            TRUE, 
-            $cookieNameValueMap["QueueId"], 
-            $cookieNameValueMap["IsCookieExtendable"] === 'true',
-            intval($cookieNameValueMap["Expires"]));
+            true, 
+            $cookieNameValueMap["QueueId"],
+			$fixedCookieValidityMinutes,
+            $cookieNameValueMap["RedirectType"]
+		);
     }
 }
 
@@ -130,14 +182,17 @@ class StateInfo
 {
     public $isValid;
     public $queueId;
-    public $isStateExtendable;
-    //used just for unit tests
-    public $expires;
+    public $fixedCookieValidityMinutes;
+    public $redirectType;
 
-    public function __construct($isValid, $queueId, $isStateExtendable, $expires) {
+    public function __construct($isValid, $queueId, $fixedCookieValidityMinutes, $redirectType) {
         $this->isValid = $isValid;
         $this->queueId = $queueId;
-        $this->isStateExtendable = $isStateExtendable;
-        $this->expires  = $expires;
+        $this->fixedCookieValidityMinutes = $fixedCookieValidityMinutes;
+		$this->redirectType = $redirectType;        
     }
+
+	public function isStateExtendable() {
+		return $this->isValid && $this->fixedCookieValidityMinutes === null;
+	}
 }

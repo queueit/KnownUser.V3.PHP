@@ -12,9 +12,9 @@ require_once('QueueITHelpers.php');
 class KnownUser 
 {
     //used for unittest
-    private static $userInQueueService = NULL;
+    private static $userInQueueService = null;
     private static function getUserInQueueService() {
-        if (KnownUser::$userInQueueService == NULL) 
+        if (KnownUser::$userInQueueService == null) 
         {
             return new UserInQueueService(new UserInQueueStateCookieRepository(KnownUser::getHttpRequestProvider()->getCookieManager()));
         }
@@ -22,15 +22,15 @@ class KnownUser
     }
 
     //used for unittest
-    private static $httpRequestProvider= NULL;
+    private static $httpRequestProvider= null;
     private static function getHttpRequestProvider() {
-        if (KnownUser::$httpRequestProvider == NULL) 
+        if (KnownUser::$httpRequestProvider == null) 
         {
             return new HttpRequestProvider();
         }
         return KnownUser::$httpRequestProvider;
     }
-    private static $debugInfoArray=NULL;
+    private static $debugInfoArray=null;
     public static function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey) {
         if (empty($eventId)) {
             throw new KnownUserException("eventId can not be null or empty.");
@@ -151,14 +151,13 @@ class KnownUser
 
                 if ($isDebug)
                 {
-                    $dic = array("MatchedConfig"=>(($matchedConfig !=NULL) ? $matchedConfig["Name"]:"NULL"));
+                    $dic = array("MatchedConfig"=>(($matchedConfig !=null) ? $matchedConfig["Name"]:"NULL"));
                     KnownUser::doCookieLog($dic);
                 }
                 
-                if ($matchedConfig == NULL) {
-                       return new RequestValidationResult(NULL,NULL, NULL, NULL);
-                } 
-
+                if ($matchedConfig == null) {
+                       return new RequestValidationResult(null, null, null, null, null);
+                }
 
                 if(!array_key_exists("ActionType",$matchedConfig) || $matchedConfig["ActionType"]== ActionTypes::QueueAction)
                 {
@@ -245,7 +244,7 @@ class KnownUser
 
     private static function doCookieLog(array $debugInfos)
     {  
-        if(KnownUser::$debugInfoArray !=NULL)
+        if(KnownUser::$debugInfoArray !=null)
         {
             foreach (KnownUser::$debugInfoArray as $key => $value)
             {
@@ -261,7 +260,7 @@ class KnownUser
           array_push( $cookieNameValues, $key.'='.$value);
         }
 
-        KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug", implode('|', $cookieNameValues ), 0, NULL);    
+        KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug", implode('|', $cookieNameValues ), 0, null);    
         KnownUser::$debugInfoArray = $debugInfos;
     }
 
@@ -290,10 +289,10 @@ class CookieManager implements ICookieManager
     }
 
     public function setCookie($name, $value, $expire, $domain) {
-        if ($domain == NULL) {
+        if ($domain == null) {
             $domain = "";
         }
-        setcookie($name, $value, $expire, "/", $domain, false, true);
+        setcookie($name, $value, $expire, "/", $domain, false, false);
     }
     public function getCookieArray() {
         $arryCookie = array();
@@ -329,7 +328,7 @@ class HttpRequestProvider implements IHttpRequestProvider
 
     function getCookieManager()
     {
-        if($this->cookieManager==NULL)
+        if($this->cookieManager==null)
         {
             $this->cookieManager = new CookieManager();
         }
@@ -351,7 +350,7 @@ class HttpRequestProvider implements IHttpRequestProvider
     }
     function getHeaderArray()
     {
-        if($this->allHeadersLowerCaseKeyArray == NULL)
+        if($this->allHeadersLowerCaseKeyArray == null)
         {
             $tempArray=array();
             foreach( getallheaders() as $key=>$value)

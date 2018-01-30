@@ -98,7 +98,7 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
 
     public function getIgnoreActionResult() {
             array_push($this->arrayFunctionCallsArgs['getIgnoreActionResult'], "call");
-            return new QueueIT\KnownUserV3\SDK\RequestValidationResult( QueueIT\KnownUserV3\SDK\ActionTypes::IgnoreAction,NULL,NULL,NULL);;
+            return new QueueIT\KnownUserV3\SDK\RequestValidationResult(QueueIT\KnownUserV3\SDK\ActionTypes::IgnoreAction, null, null, null, null);
         }
 
     public function extendQueueCookie(
@@ -731,7 +731,7 @@ EOT;
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
 		$r->setAccessible(true);
 		$r->setValue(null, $userInQueueservice);
-		$userInQueueservice->validateCancelRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel","eventid","queueid","redirectUrl");
+		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
 
 		$var = "some text";
 		$integrationConfigString = <<<EOT
@@ -850,7 +850,7 @@ EOT;
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);
 		$r->setValue(null, $httpRequestProvider);
-		$userInQueueservice->validateCancelRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel","eventid","redirectUrl","queueid");
+		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
 
 		$var = "some text";
 		$integrationConfigString = <<<EOT
@@ -931,7 +931,7 @@ EOT;
 		$r->setAccessible(true);
 		$r->setValue(null, NULL);
 
-		$userInQueueservice->validateCancelRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel","eventid","redirectUrl","queueid");
+		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
 
 	$integrationConfigString = <<<EOT
 		{
@@ -1008,7 +1008,7 @@ EOT;
 		$r->setAccessible(true);
 		$r->setValue(null, NULL);
 
-		$userInQueueservice->validateCancelRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel","eventid","redirectUrl","queueid");
+		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
 
 	$integrationConfigString = <<<EOT
 		{
