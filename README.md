@@ -2,7 +2,7 @@
 >[packagist](https://packagist.org/packages/queueit/knownuserv3)
 
 # KnownUser.V3.PHP
-The Queue-it Security Framework is used to ensure that end users cannot bypass the queue by adding a server-side integration to your server. 
+The Queue-it Security Framework is used to ensure that end users cannot bypass the queue by adding a server-side integration to your server. It supports php >= 5.3.3.
 
 ## Introduction
 When a user is redirected back from the queue to your website, the queue engine can attache a query string parameter (`queueittoken`) containing some information about the user. 
