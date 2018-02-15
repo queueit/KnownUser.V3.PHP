@@ -46,7 +46,7 @@ class RequestValidationResult
     public $queueId;
     public $actionType;
 	public $redirectType;
-
+    public $isAjaxResult;
     function __construct($actionType, $eventId, $queueId, $redirectUrl, $redirectType) {
        $this->actionType = $actionType;
        $this->eventId = $eventId;
@@ -57,7 +57,18 @@ class RequestValidationResult
 
     public function doRedirect() {
         return !Utils::isNullOrEmptyString($this->redirectUrl);
-    }     
+    }  
+    public function getAjaxQueueRedirectHeaderKey()
+    {
+        return "x-queueit-redirect";
+    }
+    public function getAjaxRedirectUrl() {
+        if (!Utils::isNullOrEmptyString($this->redirectUrl))
+        {
+            return urlencode($this->redirectUrl);
+        }
+        return "";
+    }   
 }
 
 class KnownUserException extends \Exception

@@ -11,6 +11,7 @@ require_once('QueueITHelpers.php');
 
 class KnownUser 
 {
+    const QueueITAjaxHeaderKey = "x-queueit-ajaxpageurl" ;
     //used for unittest
     private static $userInQueueService = null;
     private static function getUserInQueueService() {
@@ -45,46 +46,10 @@ class KnownUser
         $userInQueueService->extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey);
     }
 
-    public static function resolveRequestByLocalEventConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
-        if (KnownUser::getIsDebug($queueitToken, $secretKey))
-        {
-            $dic = array(
-            "TargetUrl"=> $targetUrl,
-            "QueueitToken"=> $queueitToken,
-            "QueueConfig"=>$queueConfig != null ? $queueConfig->getString() : "NULL",
-            "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
-			KnownUser::logMoreRequestDetails($dic);
-            KnownUser::doCookieLog($dic);
-        }
-        if (Utils::isNullOrEmptyString($customerId)) {
-            throw new KnownUserException("customerId can not be null or empty.");
-        }
 
-        if (Utils::isNullOrEmptyString($secretKey)) {
-            throw new KnownUserException("secretKey can not be null or empty.");
-        }
-
-        if (Utils::isNullOrEmptyString($queueConfig->eventId)) {
-            throw new KnownUserException("eventId from queueConfig can not be null or empty.");
-        }
-
-        if (Utils::isNullOrEmptyString($queueConfig->queueDomain)) {
-            throw new KnownUserException("queueDomain from queueConfig can not be null or empty.");
-        }
-
-        if (!is_int($queueConfig->cookieValidityMinute) || intval($queueConfig->cookieValidityMinute) <= 0) {
-            throw new KnownUserException("cookieValidityMinute from queueConfig should be integer greater than 0.");
-        }
-
-        if (!is_bool($queueConfig->extendCookieValidity)) {
-            throw new KnownUserException("extendCookieValidity from queueConfig should be valid boolean.");
-        }
-
-        $userInQueueService = KnownUser::getUserInQueueService();
-        return $userInQueueService->validateQueueRequest($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey);
-    }
     
     public static function cancelRequestByLocalConfig($targetUrl, $queueitToken,CancelEventConfig $cancelConfig, $customerId, $secretKey) {
+        $targetUrl = KnownUser::generateTargetUrl($targetUrl);
         if (KnownUser::getIsDebug($queueitToken, $secretKey))
         {
             $dic = array(
@@ -114,8 +79,11 @@ class KnownUser
         if (Utils::isNullOrEmptyString($cancelConfig->queueDomain)) {
             throw new KnownUserException("queueDomain from cancelConfig can not be null or empty.");
         }
+      
         $userInQueueService = KnownUser::getUserInQueueService();
-        return $userInQueueService->validateCancelRequest($targetUrl, $cancelConfig, $customerId, $secretKey);
+        $result =  $userInQueueService->validateCancelRequest($targetUrl, $cancelConfig, $customerId, $secretKey);
+        $result->isAjaxResult = KnownUser::isQueueAjaxCall();
+        return $result;
     }
 
     public static function validateRequestByIntegrationConfig($currentUrlWithoutQueueITToken, $queueitToken, $integrationsConfigString, $customerId, $secretKey) {
@@ -175,7 +143,9 @@ class KnownUser
                 else //IgnoreAction
                 {
                     $userInQueueService = KnownUser::getUserInQueueService();
-                    return $userInQueueService->getIgnoreActionResult();   
+                    $result =  $userInQueueService->getIgnoreActionResult();   
+                    $result->isAjaxResult = KnownUser::isQueueAjaxCall();
+                    return $result;
                 }
         }
         catch (\Exception $e) {
@@ -184,7 +154,52 @@ class KnownUser
            
         
     }
+    public static function resolveRequestByLocalEventConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
+        $targetUrl = KnownUser::generateTargetUrl($targetUrl);
+        return KnownUser::_resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey);
+    }
+    private static function _resolveRequestByLocalEventConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
 
+        if (KnownUser::getIsDebug($queueitToken, $secretKey))
+        {
+            $dic = array(
+            "TargetUrl"=> $targetUrl,
+            "QueueitToken"=> $queueitToken,
+            "QueueConfig"=>$queueConfig != null ? $queueConfig->getString() : "NULL",
+            "OriginalUrl"=> KnownUser::getHttpRequestProvider()->getAbsoluteUri());
+			KnownUser::logMoreRequestDetails($dic);
+            KnownUser::doCookieLog($dic);
+        }
+        if (Utils::isNullOrEmptyString($customerId)) {
+            throw new KnownUserException("customerId can not be null or empty.");
+        }
+
+        if (Utils::isNullOrEmptyString($secretKey)) {
+            throw new KnownUserException("secretKey can not be null or empty.");
+        }
+
+        if (Utils::isNullOrEmptyString($queueConfig->eventId)) {
+            throw new KnownUserException("eventId from queueConfig can not be null or empty.");
+        }
+
+        if (Utils::isNullOrEmptyString($queueConfig->queueDomain)) {
+            throw new KnownUserException("queueDomain from queueConfig can not be null or empty.");
+        }
+
+        if (!is_int($queueConfig->cookieValidityMinute) || intval($queueConfig->cookieValidityMinute) <= 0) {
+            throw new KnownUserException("cookieValidityMinute from queueConfig should be integer greater than 0.");
+        }
+
+        if (!is_bool($queueConfig->extendCookieValidity)) {
+            throw new KnownUserException("extendCookieValidity from queueConfig should be valid boolean.");
+        }
+
+       
+        $userInQueueService = KnownUser::getUserInQueueService();
+        $result = $userInQueueService->validateQueueRequest($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey);
+        $result->isAjaxResult = KnownUser::isQueueAjaxCall();
+        return $result;
+    }
     private  static  function handleQueueAction(
         $currentUrlWithoutQueueITToken, $queueitToken, 
         $customerIntegration, $customerId, 
@@ -202,19 +217,20 @@ class KnownUser
         $eventConfig->cookieValidityMinute = $matchedConfig["CookieValidityMinute"];
         $eventConfig->version = $customerIntegration["Version"];
 
-                    switch ($matchedConfig["RedirectLogic"]) {
-                        case "ForcedTargetUrl":
-                        case "ForecedTargetUrl":
-                            $targetUrl = $matchedConfig["ForcedTargetUrl"];
-                            break;
-                        case "EventTargetUrl":
-                            $targetUrl = "";
-                            break;
-                        default :
-                        $targetUrl = $currentUrlWithoutQueueITToken;
-                }
-                 return KnownUser::resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
-                }
+        switch ($matchedConfig["RedirectLogic"]) {
+                case "ForcedTargetUrl":
+                case "ForecedTargetUrl":
+                    $targetUrl = $matchedConfig["ForcedTargetUrl"];
+                    break;
+                case "EventTargetUrl":
+                    $targetUrl = "";
+                    break;
+                default :
+                    $targetUrl = KnownUser::generateTargetUrl($currentUrlWithoutQueueITToken);
+        }
+
+        return KnownUser::_resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
+     }
 
     private  static  function handleCancelAction(
         $currentUrlWithoutQueueITToken, $queueitToken, 
@@ -222,12 +238,12 @@ class KnownUser
         $secretKey,
         $matchedConfig)
     {
-                    $cancelEventConfig = new CancelEventConfig();
-                    $cancelEventConfig->eventId = $matchedConfig["EventId"];
-                    $cancelEventConfig->queueDomain = $matchedConfig["QueueDomain"];
-                    $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
-                    $cancelEventConfig->version = $customerIntegration["Version"];
-                   return KnownUser::cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey);      
+        $cancelEventConfig = new CancelEventConfig();
+        $cancelEventConfig->eventId = $matchedConfig["EventId"];
+        $cancelEventConfig->queueDomain = $matchedConfig["QueueDomain"];
+        $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $cancelEventConfig->version = $customerIntegration["Version"];
+        return KnownUser::cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey);      
     }
 	private static function logMoreRequestDetails(array &$debugInfos)
 	{
@@ -276,6 +292,21 @@ class KnownUser
         }
         return false;
     }
+
+    private static function generateTargetUrl($originalTargetUrl)
+    {
+        return !KnownUser::isQueueAjaxCall() ?
+                    $originalTargetUrl :
+                    urldecode(KnownUser::getHttpRequestProvider()->getHeaderArray()[KnownUser::QueueITAjaxHeaderKey]);
+    }
+    private static function isQueueAjaxCall()
+    {
+        return array_key_exists(KnownUser::QueueITAjaxHeaderKey,
+                                KnownUser::getHttpRequestProvider()->getHeaderArray());
+
+    }
+
+
 }
 
 class CookieManager implements ICookieManager 
