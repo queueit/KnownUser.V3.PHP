@@ -57,11 +57,8 @@ the following method is all that is needed to validate that a user has been thro
  
 
 ```php
-
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-
-
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
@@ -71,12 +68,10 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
-	//Verify if the user has been through the queue
+    //Verify if the user has been through the queue
     $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
 			$queueittoken, $configText, $customerID, $secretKey);
-
-	
-	
+		
     if($result->doRedirect())
     {
     	//Adding no cache headers to prevent browsers to cache requests
@@ -86,21 +81,20 @@ try
 	//end
     
         //Send the user to the queue - either because hash was missing or because it was invalid
-		header('Location: '.$result->redirectUrl);
+        header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
     {
-		//Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
-		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
-		die();
+        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
+        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+        die();
     }
 }
 catch(\Exception $e)
 {
-	//log the exception
+    //log the exception
 }
-
 ```
 
 Helper method to get the current url (you can have your own).
@@ -126,6 +120,9 @@ So if your webserver is e.g. behind a load balancer that modifies the host name 
 
 
 ## Alternative Implementation
+
+### Queue configuration
+
 If your application server (maybe due to security reasons) is not allowed to do external GET requests, then you have three options:
 
 1. Manually download the configuration file from Queue-it Go self-service portal, save it on your application server and load it from local disk
@@ -138,8 +135,6 @@ The following is an example of how to specify the configuration in code:
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-
-
 
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
@@ -157,32 +152,92 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
-	//Verify if the user has been through the queue
+    //Verify if the user has been through the queue
     $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig(getFullRequestUri(), 
 			$queueittoken, $eventConfig, $customerID, $secretKey);
-
 	
     if($result->doRedirect())
     {
-    	//Adding no cache headers to prevent browsers to cache requests
-	header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-	header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-	header("Pragma: no-cache");
-	//end
+        //Adding no cache headers to prevent browsers to cache requests
+        header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Pragma: no-cache");
+        //end
         //Send the user to the queue - either because hash was missing or because it was invalid
-		header('Location: '.$result->redirectUrl);
+        header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
     {
-		//Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
-		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
-		die();
+        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
+        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+        die();
     }
 }
 catch(\Exception $e)
 {
 	//log the exception
 }
+```
+### Protecting ajax calls on static pages
+If you have some static html pages (might be behind cache servers) and you have some ajax calls from those pages needed to be protected by KnownUser library you need to follow these steps:
+1) You are using v.3.5.1 (or later) of the KnownUser library.
+2) Make sure KnownUser code will not run on static pages (by ignoring those URLs in your integration configuration).
+3) Protect static pages by including this Javascript code:
+```
+<script
+        type="text/javascript"
+        src="//static.queue-it.net/script/knownuserv3.js">
+</script>
+```
+4) Use the following method to protect all dynamic calls (including dynamic pages and ajax calls).
 
+```php
+require_once( __DIR__ .'Models.php');
+require_once( __DIR__ .'KnownUser.php');
+
+$configText = file_get_contents('integrationconfig.json');
+$customerID = ""; //Your Queue-it customer ID
+$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
+
+$queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
+
+try
+{
+    //Verify if the user has been through the queue
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
+			$queueittoken, $configText, $customerID, $secretKey);
+		
+    if($result->doRedirect())
+    {
+        //Adding no cache headers to prevent browsers to cache requests
+        header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
+        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+        header("Pragma: no-cache");
+        //end
+    
+        if(!$result->isAjaxResult)
+        {
+            //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+            header('Location: ' . $result->redirectUrl);		            
+        }
+        else
+        {
+            header('HTTP/1.0: 200');
+            header($result->getAjaxQueueRedirectHeaderKey() . ': '. $result->getAjaxRedirectUrl());            
+        }
+		
+        die();
+    }
+    if(!empty($queueittoken))
+    {
+        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
+        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+        die();
+    }
+}
+catch(\Exception $e)
+{
+    //log the exception
+}
 ```
