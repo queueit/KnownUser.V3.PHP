@@ -49,8 +49,8 @@ If the timestamp or hash is invalid, the user is send back to the queue.
 
 
 ## Implementation
-The KnownUser validation must *only* be done on *page requests*. 
-So, if you add the KnownUser validation logic to a central place, then be sure that the Triggers only fire on page requests and not on e.g. image or ajax requests.
+The KnownUser validation must be done on *all requests except requests for static resources like images, css files and ...*. 
+So, if you add the KnownUser validation logic to a central place, then be sure that the Triggers only fire on page requests (including ajax requests) and not on e.g. image.
 
 If we have the `integrationconfig.json` copied  in the folder beside other knownuser files inside web application folder then 
 the following method is all that is needed to validate that a user has been through the queue:
