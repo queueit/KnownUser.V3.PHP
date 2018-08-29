@@ -68,9 +68,12 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
+    $fullUrl = getFullRequestUri();
+    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
+    
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
-			$queueittoken, $configText, $customerID, $secretKey);
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+       $currentUrlWithoutQueueitToken, $queueittoken, $configText, $customerID, $secretKey);
 		
     if($result->doRedirect())
     {
@@ -85,10 +88,10 @@ try
         die();
     }
     if(!empty($queueittoken))
-    {
-        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
-        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
-        die();
+    {        
+	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+        header('Location: ' . $currentUrlWithoutQueueitToken);
+	die();
     }
 }
 catch(\Exception $e)
@@ -152,9 +155,12 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
+    $fullUrl = getFullRequestUri();
+    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
+
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig(getFullRequestUri(), 
-			$queueittoken, $eventConfig, $customerID, $secretKey);
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig(
+       $currentUrlWithoutQueueitToken, $queueittoken, $eventConfig, $customerID, $secretKey);
 	
     if($result->doRedirect())
     {
@@ -168,10 +174,10 @@ try
         die();
     }
     if(!empty($queueittoken))
-    {
-        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
-        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
-        die();
+    {        
+	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+        header('Location: ' . $currentUrlWithoutQueueitToken);
+	die();
     }
 }
 catch(\Exception $e)
@@ -208,9 +214,12 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
+    $fullUrl = getFullRequestUri();
+    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
+
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
-			$queueittoken, $configText, $customerID, $secretKey);
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+       $currentUrlWithoutQueueitToken, $queueittoken, $configText, $customerID, $secretKey);
 		
     if($result->doRedirect())
     {
@@ -234,10 +243,10 @@ try
         die();
     }
     if(!empty($queueittoken) && !empty($result->actionType))
-    {
-        //Request can continue - we remove queueittoken from querystring parameter to avoid sharing of user specific token
-        header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
-        die();
+    {        
+	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+        header('Location: ' . $currentUrlWithoutQueueitToken);
+	die();
     }
 }
 catch(\Exception $e)
