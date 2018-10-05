@@ -31,7 +31,7 @@ interface IUserInQueueService
 
 class UserInQueueService implements IUserInQueueService
 {
-    const SDK_VERSION = "3.5.1";
+    const SDK_VERSION = "3.5.2";
     private $userInQueueStateRepository;
 
     function __construct(IUserInQueueStateRepository $userInQueueStateRepository) {

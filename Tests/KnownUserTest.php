@@ -6,7 +6,7 @@ require_once( __DIR__ . '/../Models.php');
 
 error_reporting(E_ALL);
 
-class CookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
+class KnownUserCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
 {
     public $debugInfoCookie;
     public $cookieArray;
@@ -386,7 +386,7 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($userInQueueservice->expectCall('extendQueueCookie', 1, array("eventid", 10, "cookieDomain", "secretkey")));
     }
 
-    function test_resolveRequestByLocalEventConfig_empty_eventId() {
+    function test_resolveQueueRequestByLocalConfig_empty_eventId() {
         $this->setHttpHeaderRequestProvider();
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
         $eventconfig->cookieDomain = "cookieDomain";
@@ -401,13 +401,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "eventId from queueConfig can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig_empty_secreteKey() {
+    function test_resolveQueueRequestByLocalConfig_empty_secreteKey() {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -422,13 +422,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", NULL);
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", NULL);
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "secretKey can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig_empty_queueDomain() {
+    function test_resolveQueueRequestByLocalConfig_empty_queueDomain() {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -443,13 +443,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "queueDomain from queueConfig can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig_empty_customerId() {
+    function test_resolveQueueRequestByLocalConfig_empty_customerId() {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -464,13 +464,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, NULL, "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, NULL, "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "customerId can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig_Invalid_extendCookieValidity() {
+    function test_resolveQueueRequestByLocalConfig_Invalid_extendCookieValidity() {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -485,13 +485,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "extendCookieValidity from queueConfig should be valid boolean.";
         }
         $this->assertTrue($exceptionThrown);
     }  
-    function test_resolveRequestByLocalEventConfig_Invalid_cookieValidityMinute() {
+    function test_resolveQueueRequestByLocalConfig_Invalid_cookieValidityMinute() {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -506,13 +506,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "cookieValidityMinute from queueConfig should be integer greater than 0.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig_zero_cookieValidityMinute() {
+    function test_resolveQueueRequestByLocalConfig_zero_cookieValidityMinute() {
         $this->setHttpHeaderRequestProvider();
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
         $eventconfig->cookieDomain = "cookieDomain";
@@ -526,13 +526,13 @@ $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "cookieValidityMinute from queueConfig should be integer greater than 0.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveRequestByLocalEventConfig() {
+    function test_resolveQueueRequestByLocalConfig() {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
         $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
@@ -549,12 +549,12 @@ $this->setHttpHeaderRequestProvider();
         $eventconfig->cookieValidityMinute = 10;
         $eventconfig->version = 12;
 
-        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
 
         $this->assertTrue($userInQueueservice->expectCall('validateRequest', 1, array("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey")));
         $this->assertFalse($result->isAjaxResult);
     }
-    function test_resolveRequestByLocalEventConfig_AjaxCall() {
+    function test_resolveQueueRequestByLocalConfig_AjaxCall() {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
 			
@@ -581,7 +581,7 @@ $this->setHttpHeaderRequestProvider();
         $eventconfig->cookieValidityMinute = 10;
         $eventconfig->version = 12;
 
-        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey");
 
         $this->assertTrue($userInQueueservice->expectCall('validateRequest', 1, array("http://url", "queueIttoken", $eventconfig, "customerid", "secretkey")));
         $this->assertTrue($result->isAjaxResult);
@@ -1339,7 +1339,7 @@ EOT;
 		$r->setValue(null, $userInQueueservice);
 
 		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
 		$httpRequestProvider->userHostAddress ="userIP";
 		$httpRequestProvider->headerArray = array(
 			"via" => "v", 
@@ -1423,7 +1423,7 @@ EOT;
 		$r->setValue(null, $userInQueueservice);
 
 		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);
@@ -1501,7 +1501,7 @@ EOT;
 		$r->setValue(null, $userInQueueservice);
 
 		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);
@@ -1555,7 +1555,7 @@ EOT;
 		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==Null );
 	}
 
-	function test_resolveRequestByLocalEventConfig_debug() {
+	function test_resolveQueueRequestByLocalConfig_debug() {
         $userInQueueservice = new UserInQueueServiceMock();
         $userInQueueservice->validateQueueRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
@@ -1569,7 +1569,7 @@ EOT;
 			"x-forwarded-for" => "xff", 
 			"x-forwarded-host" => "xfh", 
 			"x-forwarded-proto" => "xfp");
-		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);
@@ -1591,7 +1591,7 @@ EOT;
 
 		$token = $this->generateHashDebugValidHash("secretkey");
 		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
-		QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig("targeturl", $token, $eventconfig, "customerid", "secretkey");
+		QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", $token, $eventconfig, "customerid", "secretkey");
 
 		$expectedCookie= 
 		"TargetUrl=targeturl".
@@ -1623,7 +1623,7 @@ EOT;
 			"x-forwarded-for" => "xff", 
 			"x-forwarded-host" => "xfh", 
 			"x-forwarded-proto" => "xfp");
-		$httpRequestProvider->cookieManager = new CookieManagerMock();
+		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
 		$httpRequestProvider->absoluteUri="OriginalURL";
 		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
 		$r->setAccessible(true);

@@ -292,7 +292,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
    function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched()
     {
       $request = new HttpRequestProviderMock();
-      $request->cookieManager = new CookieManagerMock();
+      $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $integrationConfig = array(
                 "Integrations"=>array( 
                                      array(
@@ -333,7 +333,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
     function test_getMatchedIntegrationConfig_OneTrigger_And_Matched()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $request->cookieManager->cookieArray = array("c2"=>"ddd","c1"=>"Value1");
 
         $integrationConfig = array(
@@ -370,14 +370,14 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
-                $url,$request)["Name"]==="integration1");
+        $result = $testObject->getMatchedIntegrationConfig($integrationConfig, $url, $request);
+        $this->assertTrue($result["Name"]==="integration1");
     }
 
     function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched_UserAgent()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $request->cookieManager->cookieArray = array("c2"=>"ddd","c1"=>"Value1");
         $request->userAgent =  "bot.html google.com googlebot test";
         $integrationConfig = array(
@@ -428,7 +428,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
     function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched_HttpHeader()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $request->cookieManager->cookieArray = array("c2"=>"ddd","c1"=>"Value1");
         $request->headerArray =  array("c1"=>"t1","headertest"=>"abcd efg test gklm");
         
@@ -481,7 +481,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
     function test_getMatchedIntegrationConfig_OneTrigger_Or_NotMatched()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $integrationConfig = array(
                 "Integrations"=>array(
                                      array(
@@ -524,7 +524,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
     function test_getMatchedIntegrationConfig_OneTrigger_Or_Matched()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $integrationConfig = array(
                 "Integrations"=>array(
                                      array(
@@ -559,14 +559,14 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,  
-                $url,$request)["Name"]==="integration1");
+        $result = $testObject->getMatchedIntegrationConfig($integrationConfig, $url, $request);
+        $this->assertTrue($result["Name"]==="integration1");
 
     }
     function test_getMatchedIntegrationConfig_TwoTriggers_Matched()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
         $integrationConfig = array(
                 "Integrations"=>array(
                                    
@@ -616,13 +616,14 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,   $url,$request)["Name"]=="integration1");
+        $result = $testObject->getMatchedIntegrationConfig($integrationConfig, $url,$request);
+        $this->assertTrue($result["Name"]=="integration1");
  
     }
     function test_getMatchedIntegrationConfig_ThreeIntegrationsInOrder_SecondMatched()
     {
         $request = new HttpRequestProviderMock();
-        $request->cookieManager = new CookieManagerMock();
+        $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
                $integrationConfig = array(
                 "Integrations"=>array(
                                      array(
@@ -686,7 +687,8 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $url = "http://test.tesdomain.com:8080/test?q=2";
         $testObject = new QueueIT\KnownUserV3\SDK\IntegrationEvaluator();
      
-        $this->assertTrue($testObject->getMatchedIntegrationConfig($integrationConfig,$url,$request)["Name"]=="integration1");
+        $result = $testObject->getMatchedIntegrationConfig($integrationConfig,$url,$request);
+        $this->assertTrue($result["Name"]=="integration1");
     }
        
 }
@@ -717,7 +719,7 @@ class HttpRequestProviderMock implements QueueIT\KnownUserV3\SDK\IHttpRequestPro
     }
 }
 
-class CookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
+class IntegrationConfigHelpersCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager
 {
     public $debugInfoCookie;
     public $cookieArray;

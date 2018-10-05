@@ -154,11 +154,11 @@ class KnownUser
            
         
     }
-    public static function resolveRequestByLocalEventConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
+    public static function resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
         $targetUrl = KnownUser::generateTargetUrl($targetUrl);
-        return KnownUser::_resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey);
+        return KnownUser::_resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey);
     }
-    private static function _resolveRequestByLocalEventConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
+    private static function _resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey) {
 
         if (KnownUser::getIsDebug($queueitToken, $secretKey))
         {
@@ -229,7 +229,7 @@ class KnownUser
                     $targetUrl = KnownUser::generateTargetUrl($currentUrlWithoutQueueITToken);
         }
 
-        return KnownUser::_resolveRequestByLocalEventConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
+        return KnownUser::_resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, $eventConfig, $customerId, $secretKey);
      }
 
     private  static  function handleCancelAction(
@@ -295,18 +295,18 @@ class KnownUser
 
     private static function generateTargetUrl($originalTargetUrl)
     {
-        return !KnownUser::isQueueAjaxCall() ?
-                    $originalTargetUrl :
-                    urldecode(KnownUser::getHttpRequestProvider()->getHeaderArray()[KnownUser::QueueITAjaxHeaderKey]);
+        if(!KnownUser::isQueueAjaxCall())
+            return $originalTargetUrl;
+
+        $headers = KnownUser::getHttpRequestProvider()->getHeaderArray();
+        return urldecode($headers[KnownUser::QueueITAjaxHeaderKey]);
     }
+
     private static function isQueueAjaxCall()
     {
         return array_key_exists(KnownUser::QueueITAjaxHeaderKey,
                                 KnownUser::getHttpRequestProvider()->getHeaderArray());
-
     }
-
-
 }
 
 class CookieManager implements ICookieManager 

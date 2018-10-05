@@ -3,7 +3,7 @@ require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
 require_once( __DIR__ . '/../UserInQueueStateCookieRepository.php');
 error_reporting(E_ALL);
 
-class CookieManagerMockClass implements QueueIT\KnownUserV3\SDK\ICookieManager 
+class UserInQueueStateCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager 
 {
     public $cookieList;
     public $setCookieCalls;
@@ -55,7 +55,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieValidity = 10;
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, null, $cookieDomain, "Queue", $secretKey);
@@ -77,7 +77,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieValidity = 3;
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, $cookieValidity, $cookieDomain, "Idle", $secretKey);
@@ -100,7 +100,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieValidity = 10;
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, 3, $cookieDomain, "Idle", $secretKey);
@@ -122,7 +122,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieValidity = 10;
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, 3, $cookieDomain, "Idle", $secretKey);
@@ -143,7 +143,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $queueId = "queueId";
 		$cookieValidity = -1;
 
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, null, $cookieDomain, "Idle", $secretKey);
@@ -158,7 +158,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $queueId = "queueId";
 		$cookieValidity = 10;	
 
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, null, $cookieDomain, "Queue", $secretKey);
@@ -177,7 +177,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieKey = "key";
 		$cookieValidity = 10;
 
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 		
         $state = $testObject->getState($eventId, $cookieValidity, $secretKey, true);
@@ -192,7 +192,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 		$cookieValidity = 10;
 
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 	
         $testObject->store($eventId, $queueId, 20, $cookieDomain, "Queue", $secretKey);
@@ -211,7 +211,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $queueId = "queueId";
 		$cookieValidity = 20;
 
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
         $testObject->store($eventId, $queueId, 20, $cookieDomain, "Queue", $secretKey);
         $state = $testObject->getState($eventId, $cookieValidity, $secretKey, true);
@@ -233,7 +233,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $queueId = "queueId";
         $cookieKey = QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository::getCookieKey($eventId);
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
         $testObject->store($eventId, $queueId, null, $cookieDomain, "Queue", $secretKey);
         $testObject->reissueQueueCookie($eventId, 12, $cookieDomain, $secretKey);
@@ -252,7 +252,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
         $cookieDomain = ".test.com";
         $queueId = "queueId";
 	
-        $cookieManager = new CookieManagerMockClass();
+        $cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
         $testObject->store("event2", $queueId, 20, $cookieDomain, "Queue", $secretKey);
         $testObject->reissueQueueCookie($eventId, 12, $cookieDomain, $secretKey);
@@ -268,7 +268,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$issueTime = time();
 		$hash = $this->generateHash($eventId, $queueId, null, "queue", $issueTime, $secretKey);
 
-		$cookieManager = new CookieManagerMockClass();
+		$cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 		
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&RedirectType=queue&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
@@ -289,7 +289,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$issueTime = time() - (11*60);
 		$hash = $this->generateHash($eventId, $queueId, null, "queue", $issueTime, $secretKey);
 
-		$cookieManager = new CookieManagerMockClass();
+		$cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 		
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&RedirectType=queue&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
@@ -307,7 +307,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$issueTime = time() - (4*60);
 		$hash = $this->generateHash($eventId, $queueId, 3, "idle", $issueTime, $secretKey);
 
-		$cookieManager = new CookieManagerMockClass();
+		$cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 		
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&FixedValidityMins=3&RedirectType=idle&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
@@ -325,7 +325,7 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$issueTime = time();
 		$hash = $this->generateHash($eventId, $queueId, 3, "idle", $issueTime, $secretKey);
 
-		$cookieManager = new CookieManagerMockClass();
+		$cookieManager = new UserInQueueStateCookieManagerMock();
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
 		
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&FixedValidityMins=3&RedirectType=idle&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
