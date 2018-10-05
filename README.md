@@ -131,7 +131,7 @@ If your application server (maybe due to security reasons) is not allowed to do 
 1. Manually download the configuration file from Queue-it Go self-service portal, save it on your application server and load it from local disk
 2. Use an internal gateway server to download the configuration file and save to application server
 3. Specify the configuration in code without using the Trigger/Action paradigm. In this case it is important *only to queue-up page requests* and not requests for resources or AJAX calls. 
-This can be done by adding custom filtering logic before caling the `KnownUser::resolveRequestByLocalEventConfig()` method. 
+This can be done by adding custom filtering logic before caling the `KnownUser::resolveQueueRequestByLocalConfig()` method. 
 
 The following is an example of how to specify the configuration in code:
 
@@ -159,7 +159,7 @@ try
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveRequestByLocalEventConfig(
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
        $currentUrlWithoutQueueitToken, $queueittoken, $eventConfig, $customerID, $secretKey);
 	
     if($result->doRedirect())
