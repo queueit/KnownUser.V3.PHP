@@ -231,7 +231,7 @@ try
     
         if(!$result->isAjaxResult)
         {
-            //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+            //Send the user to the queue - either because hash was missing or because is was invalid
             header('Location: ' . $result->redirectUrl);		            
         }
         else
