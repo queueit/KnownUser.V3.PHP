@@ -39,8 +39,7 @@ The Action specifies which queue the users should be send to.
 In this way you can specify which queue(s) should protect which page(s) on the fly without changing the server-side integration.
 
 This configuration can then be downloaded to your application server. 
-Read more about how *[here](https://github.com/queueit/KnownUser.V3.PHP/tree/master/Documentation)*. 
-The configuration should be downloaded and cached for 5-10 minutes. 
+Read more about how *[here](https://github.com/queueit/KnownUser.V3.PHP/tree/master/Documentation)*.  
 
 ### 2. Validate the `queueittoken` and store a session cookie
 To validate that the user has been through the queue, use the `KnownUser::validateRequestByIntegrationConfig()` method. 
