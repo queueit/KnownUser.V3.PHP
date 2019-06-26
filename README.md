@@ -143,7 +143,7 @@ $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-serv
 
 $eventConfig = new QueueIT\KnownUserV3\SDK\QueueEventConfig();
 $eventConfig->eventId = ""; // ID of the queue to use
-$eventConfig->queueDomain = "xxx.queue-it.net"; //Domian name of the queue - usually in the format [CustomerId].queue-it.net
+$eventConfig->queueDomain = "xxx.queue-it.net"; //Domain name of the queue - usually in the format [CustomerId].queue-it.net
 //$eventConfig->cookieDomain = ".my-shop.com"; //Optional - Domain name where the Queue-it session cookie should be saved
 $eventConfig->cookieValidityMinute = 15; //Optional - Validity of the Queue-it session cookie. Default is 10 minutes
 $eventConfig->extendCookieValidity = true; //Optional - Should the Queue-it session cookie validity time be extended each time the validation runs? Default is true.
