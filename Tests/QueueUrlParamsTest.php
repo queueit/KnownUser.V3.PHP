@@ -1,7 +1,11 @@
 <?php
-require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
+#has already been included in TestSuite.php
+#require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
+#require_once( __DIR__ . '/vendor/simpletest/simpletest/autorun.php');
+
 require_once( __DIR__ .'/../QueueITHelpers.php');
 error_reporting(E_ALL);
+
 class TestOfQueueUrlParamsTest extends UnitTestCase 
 {
   function test_ExtractQueueParams() {
@@ -26,6 +30,17 @@ class TestOfQueueUrlParamsTest extends UnitTestCase
      $this->assertTrue($result->cookieValidityMinutes===null);
      $this->assertTrue($result->hashCode==="");
      $this->assertTrue($result->queueITTokenWithoutHash==="ts_sasa~cv_adsasa~ce_falwwwse~q_944c1f44-60dd-4e37-aabc-f3e4bb1c8895");
+  }
+    function test_UndefinedOffset_NotValidToken() {
+     $queueITToken =  "e_dinnerdays201942~q_59a11232-313c-4e3c-9260-f7e80a0ffd25~ts";   
+     $result = QueueIT\KnownUserV3\SDK\QueueUrlParams::extractQueueParams($queueITToken);
+     $this->assertFalse($result->eventId==="");
+     $this->assertTrue($result->timeStamp===0);
+     $this->assertTrue($result->extendableCookie===false);
+     $this->assertTrue($result->queueITToken===$queueITToken);
+     $this->assertTrue($result->cookieValidityMinutes===null);
+     $this->assertTrue($result->hashCode==="");
+     $this->assertTrue($result->queueITTokenWithoutHash==="e_dinnerdays201942~q_59a11232-313c-4e3c-9260-f7e80a0ffd25~ts");
   }
 }
 

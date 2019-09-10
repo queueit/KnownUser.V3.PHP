@@ -1,8 +1,5 @@
->You can find the latest released version [here](https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and 
->[packagist](https://packagist.org/packages/queueit/knownuserv3)
-
 # KnownUser.V3.PHP
-The Queue-it Security Framework is used to ensure that end users cannot bypass the queue by adding a server-side integration to your server. It supports php >= 5.3.3.
+The Queue-it Security Framework is used to ensure that end users cannot bypass the queue by adding a server-side integration to your server. 
 
 ## Introduction
 When a user is redirected back from the queue to your website, the queue engine can attache a query string parameter (`queueittoken`) containing some information about the user. 
@@ -15,7 +12,7 @@ The most important fields of the `queueittoken` are:
 
 The high level logic is as follows:
 
-![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUserFlow.png)
+![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUser%20flow.PNG)
 
  1. User requests a page on your server
  2. The validation method sees that the has no Queue-it session cookie and no `queueittoken` and sends him to the correct queue based on the configuration
@@ -39,7 +36,8 @@ The Action specifies which queue the users should be send to.
 In this way you can specify which queue(s) should protect which page(s) on the fly without changing the server-side integration.
 
 This configuration can then be downloaded to your application server. 
-Read more about how *[here](https://github.com/queueit/KnownUser.V3.PHP/tree/master/Documentation)*.  
+Read more about how *[here](https://github.com/queueit/KnownUser.V3.PHP/tree/master/Documentation)*. 
+The configuration should be downloaded and cached for 5-10 minutes. 
 
 ### 2. Validate the `queueittoken` and store a session cookie
 To validate that the user has been through the queue, use the `KnownUser::validateRequestByIntegrationConfig()` method. 
@@ -48,62 +46,53 @@ If the timestamp or hash is invalid, the user is send back to the queue.
 
 
 ## Implementation
-The KnownUser validation must be done on *all requests except requests for static resources like images, css files and ...*. 
-So, if you add the KnownUser validation logic to a central place, then be sure that the Triggers only fire on page requests (including ajax requests) and not on e.g. image.
+The KnownUser validation must *only* be done on *page requests*. 
+So, if you add the KnownUser validation logic to a central place, then be sure that the Triggers only fire on page requests and not on e.g. image or ajax requests.
 
 If we have the `integrationconfig.json` copied  in the folder beside other knownuser files inside web application folder then 
 the following method is all that is needed to validate that a user has been through the queue:
  
 
 ```php
+
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-
+header("Cache-Control: max-age=0, no-cache, no-store, must-revalidate");
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
+$secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
 
 $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
-    $fullUrl = getFullRequestUri();
-    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
-    
-    //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
-       $currentUrlWithoutQueueitToken, $queueittoken, $configText, $customerID, $secretKey);
-		
+	//Verify if the user has been through the queue
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(getFullRequestUri(), 
+			$queueittoken, $configText, $customerID, $secretKey);
+
+	
+	
     if($result->doRedirect())
     {
-    	//Adding no cache headers to prevent browsers to cache requests
-	header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-	header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-	header("Pragma: no-cache");
-	//end
-    
-        //Send the user to the queue - either because hash was missing or because it was invalid
-        header('Location: '.$result->redirectUrl);
+        //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+		header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
-    {        
-	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
-        header('Location: ' . $currentUrlWithoutQueueitToken);
-	die();
+    {
+		//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+		die();
     }
 }
 catch(\Exception $e)
 {
-    //log the exception
+	//log the exception
 }
+
 ```
 
-Helper method to get the current url (you can have your own).
-The result of this helper method is used to match Triggers and as the Target url (where to return the users to).
-It is therefor important that the result is exactly the url of the users browsers. 
-
-So if your webserver is e.g. behind a load balancer that modifies the host name or port, reformat the helper method as needed:
+Helper method to get the current url (you can have your own):
 ```php
  function getFullRequestUri()
  {
@@ -120,30 +109,30 @@ So if your webserver is e.g. behind a load balancer that modifies the host name 
  }
 ```
 
+## Installation
+Copy the files: KnownUser.php, Models.php, UserInQueueService.php, UserInQueueStateCookieRepository.php, QueueITHelpers.php and IntegrationConfigHelpers.php
+
 
 ## Alternative Implementation
-
-### Queue configuration
-
 If your application server (maybe due to security reasons) is not allowed to do external GET requests, then you have three options:
 
 1. Manually download the configuration file from Queue-it Go self-service portal, save it on your application server and load it from local disk
 2. Use an internal gateway server to download the configuration file and save to application server
 3. Specify the configuration in code without using the Trigger/Action paradigm. In this case it is important *only to queue-up page requests* and not requests for resources or AJAX calls. 
-This can be done by adding custom filtering logic before caling the `KnownUser::resolveQueueRequestByLocalConfig()` method. 
+This can be done by adding custom filtering logic before caling the `KnownUser::validateRequestByLocalEventConfig()` method. 
 
 The following is an example of how to specify the configuration in code:
 
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-
+header("Cache-Control: max-age=0, no-cache, no-store, must-revalidate");
 $customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
+$secretKey = ""; //Your 72 char secrete key as specified in Go Queue-it self-service platform
 
-$eventConfig = new QueueIT\KnownUserV3\SDK\QueueEventConfig();
+$eventConfig = new QueueIT\KnownUserV3\SDK\EventConfig();
 $eventConfig->eventId = ""; // ID of the queue to use
-$eventConfig->queueDomain = "xxx.queue-it.net"; //Domain name of the queue - usually in the format [CustomerId].queue-it.net
+$eventConfig->queueDomain = "xxx.queue-it.net"; //Domian name of the queue - usually in the format [CustomerId].queue-it.net
 //$eventConfig->cookieDomain = ".my-shop.com"; //Optional - Domain name where the Queue-it session cookie should be saved
 $eventConfig->cookieValidityMinute = 15; //Optional - Validity of the Queue-it session cookie. Default is 10 minutes
 $eventConfig->extendCookieValidity = true; //Optional - Should the Queue-it session cookie validity time be extended each time the validation runs? Default is true.
@@ -154,102 +143,27 @@ $queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
 
 try
 {
-    $fullUrl = getFullRequestUri();
-    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
+	//Verify if the user has been through the queue
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByLocalEventConfig(getFullRequestUri(), 
+			$queueittoken, $eventConfig, $customerID, $secretKey);
 
-    //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
-       $currentUrlWithoutQueueitToken, $queueittoken, $eventConfig, $customerID, $secretKey);
 	
     if($result->doRedirect())
     {
-        //Adding no cache headers to prevent browsers to cache requests
-        header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-        header("Pragma: no-cache");
-        //end
-        //Send the user to the queue - either because hash was missing or because it was invalid
-        header('Location: '.$result->redirectUrl);
+        //Send the user to the queue - either becuase hash was missing or becuase is was invalid
+		header('Location: '.$result->redirectUrl);
         die();
     }
     if(!empty($queueittoken))
-    {        
-	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
-        header('Location: ' . $currentUrlWithoutQueueitToken);
-	die();
+    {
+		//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+		header('Location: '.str_replace("?queueittoken=".$queueittoken,"",  getFullRequestUri()));
+		die();
     }
 }
 catch(\Exception $e)
 {
 	//log the exception
 }
-```
-### Protecting ajax calls on static pages
-If you have some static html pages (might be behind cache servers) and you have some ajax calls from those pages needed to be protected by KnownUser library you need to follow these steps:
-1) You are using v.3.5.1 (or later) of the KnownUser library.
-2) Make sure KnownUser code will not run on static pages (by ignoring those URLs in your integration configuration).
-3) Add below JavaScript tags to static pages :
-```
-<script type="text/javascript" src="//static.queue-it.net/script/queueclient.min.js"></script>
-<script
- data-queueit-intercept-domain="{YOUR_CURRENT_DOMAIN}"
-   data-queueit-intercept="true"
-  data-queueit-c="{YOUR_CUSTOMER_ID}"
-  type="text/javascript"
-  src="//static.queue-it.net/script/queueconfigloader.min.js">
-</script>
-```
-4) Use the following method to protect all dynamic calls (including dynamic pages and ajax calls).
 
-```php
-require_once( __DIR__ .'Models.php');
-require_once( __DIR__ .'KnownUser.php');
-
-$configText = file_get_contents('integrationconfig.json');
-$customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
-
-$queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
-
-try
-{
-    $fullUrl = getFullRequestUri();
-    $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
-
-    //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
-       $currentUrlWithoutQueueitToken, $queueittoken, $configText, $customerID, $secretKey);
-		
-    if($result->doRedirect())
-    {
-        //Adding no cache headers to prevent browsers to cache requests
-        header("Expires:Fri, 01 Jan 1990 00:00:00 GMT");
-        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-        header("Pragma: no-cache");
-        //end
-    
-        if(!$result->isAjaxResult)
-        {
-            //Send the user to the queue - either because hash was missing or because is was invalid
-            header('Location: ' . $result->redirectUrl);		            
-        }
-        else
-        {
-            header('HTTP/1.0: 200');
-            header($result->getAjaxQueueRedirectHeaderKey() . ': '. $result->getAjaxRedirectUrl());            
-        }
-		
-        die();
-    }
-    if(!empty($queueittoken) && !empty($result->actionType))
-    {        
-	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
-        header('Location: ' . $currentUrlWithoutQueueitToken);
-	die();
-    }
-}
-catch(\Exception $e)
-{
-    //log the exception
-}
 ```

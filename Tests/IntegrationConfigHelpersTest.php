@@ -1,9 +1,13 @@
 <?php
-require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
+#has already been included in TestSuite.php
+#require_once(__DIR__ . '/vendor/simpletest/simpletest/autorun.php');
+
 require_once( __DIR__ .'/../IntegrationConfigHelpers.php');
 require_once( __DIR__ . '/../KnownUser.php');
+require_once( __DIR__ . '/HttpRequestProviderMock.php');
 require_once( __DIR__ . '/../UserInQueueService.php');
 error_reporting(E_ALL);
+
 class ComparisonOperatorHelperTest extends UnitTestCase 
 {
     function  test_evaluate_equals()
@@ -691,32 +695,6 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $this->assertTrue($result["Name"]=="integration1");
     }
        
-}
-class HttpRequestProviderMock implements QueueIT\KnownUserV3\SDK\IHttpRequestProvider
-{
-    public $userAgent;
-	public $userHostAddress;
-    public $cookieManager;
-    public $headerArray;
-    public $absoluteUri;
-
-    public function getUserAgent() {
-        return $this->userAgent;
-    }
-	public function getUserHostAddress() {
-		return $this->userHostAddress;
-	}
-    public function getCookieManager() {
-        return $this->cookieManager;
-    }
-    public function getAbsoluteUri() {
-        return $this->absoluteUri;
-    }
-    public function getHeaderArray() {
-        if($this->headerArray==NULL)
-            return array();
-        return $this->headerArray;
-    }
 }
 
 class IntegrationConfigHelpersCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager

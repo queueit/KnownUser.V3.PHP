@@ -1,5 +1,7 @@
 <?php
-require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
+#has already been included in TestSuite.php
+#require __DIR__ . '/vendor/simpletest/simpletest/autorun.php';
+
 require_once( __DIR__ . '/../UserInQueueStateCookieRepository.php');
 error_reporting(E_ALL);
 

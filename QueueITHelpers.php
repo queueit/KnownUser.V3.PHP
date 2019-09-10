@@ -33,6 +33,10 @@ class QueueUrlParams {
         foreach ($paramsNameValueList as $pNameValue) {
             $paramNameValueArr = explode(QueueUrlParams::KeyValueSeparatorChar, $pNameValue);
 
+			if (count($paramNameValueArr) != 2) {
+				continue;
+			}
+
             switch ($paramNameValueArr[0]) {
                 case QueueUrlParams::TimeStampKey: {
                         if (is_numeric($paramNameValueArr[1])) {
@@ -70,6 +74,7 @@ class QueueUrlParams {
                     }
             }
         }
+
         $result->queueITTokenWithoutHash = str_replace(
                 QueueUrlParams::KeyValueSeparatorGroupChar
                 . QueueUrlParams::HashKey
@@ -77,6 +82,5 @@ class QueueUrlParams {
                 . $result->hashCode, "", $result->queueITToken);
 
         return $result;
-    }
-
+	}
 }
