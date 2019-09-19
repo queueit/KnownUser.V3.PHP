@@ -15,7 +15,7 @@ The most important fields of the `queueittoken` are:
 
 The high level logic is as follows:
 
-![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUserFlow.png)
+![The KnownUser validation flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/KnownUser flow.PNG)
 
  1. User requests a page on your server
  2. The validation method sees that the has no Queue-it session cookie and no `queueittoken` and sends him to the correct queue based on the configuration
