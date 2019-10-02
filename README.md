@@ -95,7 +95,9 @@ try
 }
 catch(\Exception $e)
 {
-    //log the exception
+    // There was an error validationg the request
+    // Use your own logging framework to log the Exception
+    // This was a configuration exception, so we let the user continue
 }
 ```
 
@@ -181,7 +183,9 @@ try
 }
 catch(\Exception $e)
 {
-	//log the exception
+    // There was an error validationg the request
+    // Use your own logging framework to log the Exception
+    // This was a configuration exception, so we let the user continue
 }
 ```
 ### Protecting ajax calls on static pages
@@ -250,6 +254,8 @@ try
 }
 catch(\Exception $e)
 {
-    //log the exception
+    // There was an error validationg the request
+    // Use your own logging framework to log the Exception
+    // This was a configuration exception, so we let the user continue
 }
 ```
