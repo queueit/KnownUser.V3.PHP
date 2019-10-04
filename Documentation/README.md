@@ -7,7 +7,7 @@ The KnownUser library needs the Triggers and Actions to know which pages to prot
 These Triggers and Actions are specified in the Go Queue-it self-service portal.
 
 You should have a timer function, scheduled task, cron job or similar to download and cache the configuration for 5 - 10 minutes, so the configuration is ready when requests come in. You should NEVER download the configuration as part of the request handling.
-You can find your configuration file here https://[your-customer-id].queue-it.net/status/integrationconfig/[your-customer-id] after a succesful publish.
+You can find your configuration file here https://[your-customer-id].queue-it.net/status/integrationconfig/[your-customer-id] after a succesful publish. Remember, when you programmatically perform HTTP GET against the above endpoint then make sure you actually received the JSON data, i.e. only accept HTTP 200 with content-type application/json. 
 Please contact Queue-it support through the Go Queue-it self-service portal to get further help on this.
 
 ![Configuration Provider flow](https://github.com/queueit/KnownUser.V3.PHP/blob/master/Documentation/ConfigProviderExample.png)
