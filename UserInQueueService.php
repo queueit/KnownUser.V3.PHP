@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace QueueIT\KnownUserV3\SDK;
 
 require_once('Models.php');
@@ -12,29 +13,39 @@ interface IUserInQueueService
         $queueitToken,
         QueueEventConfig $config,
         $customerId,
-        $secretKey);
+        $secretKey
+    );
 
     public function validateCancelRequest(
-		$targetUrl,
-        CancelEventConfig $cancelConfig, 
-        $customerId, 
-        $secretKey);
+        $targetUrl,
+        CancelEventConfig $cancelConfig,
+        $customerId,
+        $secretKey
+    );
 
     public function extendQueueCookie(
         $eventId,
         $cookieValidityMinutes,
         $cookieDomain,
-        $secretKey);
+        $secretKey
+    );
 
-    public function getIgnoreActionResult();
+    public function getIgnoreActionResult(
+        $actionName
+    );
 }
 
 class UserInQueueService implements IUserInQueueService
 {
-    const SDK_VERSION = "3.5.4";
+    public static function getSDKVersion()
+    {
+        return "v3-php-" . "3.6.0";
+    }
+
     private $userInQueueStateRepository;
 
-    function __construct(IUserInQueueStateRepository $userInQueueStateRepository) {
+    function __construct(IUserInQueueStateRepository $userInQueueStateRepository)
+    {
         $this->userInQueueStateRepository = $userInQueueStateRepository;
     }
 
@@ -43,7 +54,8 @@ class UserInQueueService implements IUserInQueueService
         $queueitToken,
         QueueEventConfig $config,
         $customerId,
-        $secretKey) {
+        $secretKey
+    ) {
         $state = $this->userInQueueStateRepository->getState($config->eventId, $config->cookieValidityMinute, $secretKey, true);
 
         if ($state->isValid) {
@@ -54,38 +66,48 @@ class UserInQueueService implements IUserInQueueService
                     null,
                     !Utils::isNullOrEmptyString($config->cookieDomain) ? $config->cookieDomain : '',
                     $state->redirectType,
-                    $secretKey);
+                    $secretKey
+                );
             }
-            $result = new RequestValidationResult(ActionTypes::QueueAction, $config->eventId, $state->queueId, null, $state->redirectType);
+            $result = new RequestValidationResult(
+                ActionTypes::QueueAction,
+                $config->eventId,
+                $state->queueId,
+                null,
+                $state->redirectType,
+                $config->actionName
+            );
+
             return $result;
         }
 
-        if(!Utils::isNullOrEmptyString($queueitToken)) {
+        if (!Utils::isNullOrEmptyString($queueitToken)) {
             $queueParams = QueueUrlParams::extractQueueParams($queueitToken);
-            return $this->getQueueITTokenValidationResult($customerId, $targetUrl, $config->eventId, $secretKey, $config, $queueParams);
+            return $this->getQueueITTokenValidationResult($customerId, $targetUrl, $secretKey, $config, $queueParams);
         } else {
-            return $this->getInQueueRedirectResult($customerId, $targetUrl, $config);
+            return $this->cancelQueueCookieReturnQueueResult($customerId, $targetUrl, $config);
         }
     }
 
     private function getQueueITTokenValidationResult(
-         $customerId,
-         $targetUrl,
-         $eventId,
-         $secretKey,
-         QueueEventConfig $config,
-         QueueUrlParams $queueParams) {
+        $customerId,
+        $targetUrl,
+        $secretKey,
+        QueueEventConfig $config,
+        QueueUrlParams $queueParams
+    ) {
         $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
+
         if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
-            return $this->getVaidationErrorResult($customerId, $targetUrl, $config, $queueParams, "hash");
+            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "hash");
         }
 
-        if (strtoupper($queueParams->eventId) != strtoupper($eventId)) {
-            return $this->getVaidationErrorResult($customerId, $targetUrl, $config, $queueParams, "eventid");
+        if (strtoupper($queueParams->eventId) != strtoupper($config->eventId)) {
+            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "eventid");
         }
 
         if ($queueParams->timeStamp < time()) {
-            return $this->getVaidationErrorResult($customerId, $targetUrl, $config, $queueParams, "timestamp");
+            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "timestamp");
         }
 
         $this->userInQueueStateRepository->store(
@@ -94,94 +116,163 @@ class UserInQueueService implements IUserInQueueService
             $queueParams->cookieValidityMinutes,
             !Utils::isNullOrEmptyString($config->cookieDomain) ? $config->cookieDomain : '',
             $queueParams->redirectType,
-            $secretKey);
+            $secretKey
+        );
 
-            $result = new RequestValidationResult(ActionTypes::QueueAction, $config->eventId, $queueParams->queueId, null, $queueParams->redirectType);
-            return $result;
+        $result = new RequestValidationResult(
+            ActionTypes::QueueAction,
+            $config->eventId,
+            $queueParams->queueId,
+            null,
+            $queueParams->redirectType,
+            $config->actionName
+        );
+
+        return $result;
     }
 
-    private function getVaidationErrorResult(
+    private function cancelQueueCookieReturnErrorResult(
         $customerId,
         $targetUrl,
         QueueEventConfig $config,
         QueueUrlParams $qParams,
-        $errorCode) {
-        $query =$this->getQueryString($customerId,  $config->eventId,$config->version,$config->culture,$config->layoutName)
-            ."&queueittoken=" .$qParams->queueITToken
-            ."&ts=" . time()
-            .(!Utils::isNullOrEmptyString($targetUrl) ? ("&t=". urlencode( $targetUrl)) : "");
-        $domainAlias = $config->queueDomain;
-        if (substr($domainAlias, -1) !== "/") {
-            $domainAlias = $domainAlias . "/";
-        }
-        $redirectUrl = "https://". $domainAlias. "error/". $errorCode. "/?" .$query;
-        $result = new RequestValidationResult(ActionTypes::QueueAction, $config->eventId, null, $redirectUrl, null);
+        $errorCode
+    ) {
+        $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
+
+        $query = $this->getQueryString($customerId, $config->eventId, $config->version, $config->culture, $config->layoutName, $config->actionName)
+            . "&queueittoken=" . $qParams->queueITToken
+            . "&ts=" . time()
+            . (!Utils::isNullOrEmptyString($targetUrl) ? ("&t=" . rawurlencode($targetUrl)) : "");
+
+        $uriPath = "error/" . $errorCode . "/";
+
+        $redirectUrl = $this->generateRedirectUrl($config->queueDomain, $uriPath, $query);
+
+        $result = new RequestValidationResult(
+            ActionTypes::QueueAction,
+            $config->eventId,
+            null,
+            $redirectUrl,
+            null,
+            $config->actionName
+        );
 
         return $result;
     }
 
-    private function getInQueueRedirectResult($customerId, $targetUrl, QueueEventConfig $config) {
-        $redirectUrl = "https://". $config->queueDomain ."/?" 
-            .$this->getQueryString($customerId, $config->eventId,$config->version,$config->culture,$config->layoutName)
-            .(!Utils::isNullOrEmptyString($targetUrl) ? "&t=". urlencode( $targetUrl) : "");
-        $result = new RequestValidationResult(ActionTypes::QueueAction, $config->eventId, null, $redirectUrl, null);
+    private function cancelQueueCookieReturnQueueResult(
+        $customerId,
+        $targetUrl,
+        QueueEventConfig $config
+    ) {
+        $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
+
+        $query = $this->getQueryString($customerId, $config->eventId, $config->version, $config->culture, $config->layoutName, $config->actionName) .
+            (!Utils::isNullOrEmptyString($targetUrl) ? "&t=" . rawurlencode($targetUrl) : "");
+
+        $redirectUrl = $this->generateRedirectUrl($config->queueDomain, "", $query);
+
+        $result = new RequestValidationResult(
+            ActionTypes::QueueAction,
+            $config->eventId,
+            null,
+            $redirectUrl,
+            null,
+            $config->actionName
+        );
 
         return $result;
     }
 
-    private function getQueryString($customerId,
-            $eventId,
-            $configVersion,
-            $culture,
-            $layoutName) {
+    private function getQueryString(
+        $customerId,
+        $eventId,
+        $configVersion,
+        $culture,
+        $layoutName,
+        $actionName
+    ) {
         $queryStringList = array();
-        array_push($queryStringList,"c=".urlencode($customerId));
-        array_push($queryStringList,"e=".urlencode($eventId));
-        array_push($queryStringList,"ver=v3-php-".UserInQueueService::SDK_VERSION); 
-        array_push($queryStringList,"cver=". (!is_null($configVersion)?$configVersion:'-1'));
+        array_push($queryStringList, "c=" . rawurlencode($customerId));
+        array_push($queryStringList, "e=" . rawurlencode($eventId));
+        array_push($queryStringList, "ver=" . UserInQueueService::getSDKVersion());
+        array_push($queryStringList, "cver=" . (!is_null($configVersion) ? $configVersion : '-1'));
+        array_push($queryStringList, "man=" . rawurlencode($actionName));
 
         if (!Utils::isNullOrEmptyString($culture)) {
-            array_push($queryStringList, "cid=" . urlencode($culture));
+            array_push($queryStringList, "cid=" . rawurlencode($culture));
         }
 
         if (!Utils::isNullOrEmptyString($layoutName)) {
-            array_push($queryStringList, "l=" . urlencode($layoutName));
+            array_push($queryStringList, "l=" . rawurlencode($layoutName));
         }
 
         return implode("&", $queryStringList);
+    }
+
+    private function generateRedirectUrl($queueDomain, $uriPath, $query)
+    {
+        if (substr($queueDomain, -1) !== "/")
+            $queueDomain = $queueDomain . "/";
+
+        return "https://" . $queueDomain . $uriPath . "?" . $query;
     }
 
     public function extendQueueCookie(
         $eventId,
         $cookieValidityMinutes,
         $cookieDomain,
-        $secretKey) {
+        $secretKey
+    ) {
         $this->userInQueueStateRepository->reissueQueueCookie($eventId, $cookieValidityMinutes, $cookieDomain, $secretKey);
     }
 
-    public function validateCancelRequest($targetUrl,CancelEventConfig $cancelConfig,$customerId,$secretKey) {
+    public function validateCancelRequest($targetUrl, CancelEventConfig $cancelConfig, $customerId, $secretKey)
+    {
         //we do not care how long cookie is valid while canceling cookie
-		$state = $this->userInQueueStateRepository->getState($cancelConfig->eventId, -1, $secretKey, false);
-        if ($state->isValid)
-        {
-            $this->userInQueueStateRepository->cancelQueueCookie($cancelConfig->eventId, $cancelConfig->cookieDomain);
-            $query = $this->getQueryString($customerId, $cancelConfig->eventId, $cancelConfig->version, null, null)
-                        .(!Utils::isNullOrEmptyString($targetUrl) ? ("&r=". urlencode($targetUrl)) : "");
-            $domainAlias = $cancelConfig->queueDomain;
-            if (substr($domainAlias, -1) !== "/") {
-                    $domainAlias = $domainAlias . "/";
-            }
+        $state = $this->userInQueueStateRepository->getState($cancelConfig->eventId, -1, $secretKey, false);
 
-            $redirectUrl = "https://" . $domainAlias . "cancel/" . $customerId . "/" . $cancelConfig->eventId . "/?" . $query;
-            return new RequestValidationResult(ActionTypes::CancelAction, $cancelConfig->eventId, $state->queueId, $redirectUrl, $state->redirectType);
-        }
-        else
-        {
-            return new RequestValidationResult(ActionTypes::CancelAction, $cancelConfig->eventId, null, null, null);
+        if ($state->isValid) {
+            $this->userInQueueStateRepository->cancelQueueCookie($cancelConfig->eventId, $cancelConfig->cookieDomain);
+
+            $query = $this->getQueryString($customerId, $cancelConfig->eventId, $cancelConfig->version, null, null, $cancelConfig->actionName)
+                . (!Utils::isNullOrEmptyString($targetUrl) ? ("&r=" . rawurlencode($targetUrl)) : "");
+
+
+            $uriPath = "cancel/" . $customerId . "/" . $cancelConfig->eventId . "/";
+
+            $redirectUrl = $this->generateRedirectUrl($cancelConfig->queueDomain, $uriPath, $query);
+
+            return new RequestValidationResult(
+                ActionTypes::CancelAction,
+                $cancelConfig->eventId,
+                $state->queueId,
+                $redirectUrl,
+                $state->redirectType,
+                $cancelConfig->actionName
+            );
+        } else {
+            return new RequestValidationResult(
+                ActionTypes::CancelAction,
+                $cancelConfig->eventId,
+                null,
+                null,
+                null,
+                $cancelConfig->actionName
+            );
         }
     }
-    
-	public function getIgnoreActionResult() {
-        return new RequestValidationResult(ActionTypes::IgnoreAction, null, null, null, null);
+
+    public function getIgnoreActionResult($actionName)
+    {
+        return new RequestValidationResult(
+            ActionTypes::IgnoreAction,
+            null,
+            null,
+            null,
+            null,
+            $actionName
+        );
     }
 }

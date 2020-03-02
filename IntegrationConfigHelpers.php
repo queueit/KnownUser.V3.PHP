@@ -79,11 +79,10 @@ class IntegrationEvaluator implements IIntegrationEvaluator
 class UrlValidatorHelper 
 {
     public static function evaluate(array $triggerPart, $url) {
-        if (
-                !array_key_exists("Operator", $triggerPart) ||
-                !array_key_exists("IsNegative", $triggerPart) ||
-                !array_key_exists("IsIgnoreCase", $triggerPart) ||
-                !array_key_exists("UrlPart", $triggerPart)) {
+        if (!array_key_exists("Operator", $triggerPart) ||
+            !array_key_exists("IsNegative", $triggerPart) ||
+            !array_key_exists("IsIgnoreCase", $triggerPart) ||
+            !array_key_exists("UrlPart", $triggerPart)) {
             return false;
         }
 
@@ -193,12 +192,6 @@ class ComparisonOperatorHelper
                 return ComparisonOperatorHelper::equals($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "Contains":
                 return ComparisonOperatorHelper::contains($value, $valueToCompare, $isNegative, $isIgnoreCase);
-            case "StartsWith":
-                return ComparisonOperatorHelper::startsWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
-            case "EndsWith":
-                return ComparisonOperatorHelper::endsWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
-            case "MatchesWith":
-                return ComparisonOperatorHelper::matchesWith($value, $valueToCompare, $isNegative, $isIgnoreCase);
             case "EqualsAny":
                 return ComparisonOperatorHelper::equalsAny($value, $valuesToCompare, $isNegative, $isIgnoreCase);
             case "ContainsAny":
@@ -209,7 +202,7 @@ class ComparisonOperatorHelper
     }
 
     private static function contains($value, $valueToCompare, $isNegative, $ignoreCase) {
-        if ($valueToCompare === "*") {
+        if ($valueToCompare === "*" && !Utils::isNullOrEmptyString($value)) {
             return true;
         }
 
@@ -218,6 +211,7 @@ class ComparisonOperatorHelper
             $valueToCompare = strtoupper($valueToCompare);
         }
         $evaluation = strpos($value, $valueToCompare) !== false;
+        
         if ($isNegative) {
             return !$evaluation;
         } else {
@@ -255,61 +249,5 @@ class ComparisonOperatorHelper
                 return !$isNegative;
         }
         return $isNegative;
-    }
-
-    private static function endsWith($value, $valueToCompare, $isNegative, $ignoreCase) {
-        if ($ignoreCase) {
-            $value = strtoupper($value);
-            $valueToCompare = strtoupper($valueToCompare);
-        }
-        $evaluation = false;
-        $rLength = strlen($valueToCompare);
-        if ($rLength === 0) {
-            $evaluation = true;
-        } else {
-            $evaluation = substr($value, -$rLength) === $valueToCompare;
-        }
-
-        if ($isNegative) {
-            return !$evaluation;
-        } else {
-            return $evaluation;
-        }
-    }
-
-    private static function startsWith($value, $valueToCompare, $isNegative, $ignoreCase) {
-        if ($ignoreCase) {
-            $value = strtoupper($value);
-            $valueToCompare = strtoupper($valueToCompare);
-        }
-        $evaluation = false;
-
-        $rLength = strlen($valueToCompare);
-        $evaluation = (substr($value, 0, $rLength) === $valueToCompare);
-
-        if ($isNegative) {
-            return !$evaluation;
-        } else {
-            return $evaluation;
-        }
-    }
-
-    private static function matchesWith($value, $valueToCompare, $isNegative, $ignoreCase) {
-        if ($ignoreCase) {
-            $value = strtoupper($value);
-            $valueToCompare = strtoupper($valueToCompare);
-        }
-
-        if (preg_match($valueToCompare, $value)) {
-            $evaluation = true;
-        } else {
-            $evaluation = false;
-        }
-
-        if ($isNegative) {
-            return !$evaluation;
-        } else {
-            return $evaluation;
-        }
     }
 }

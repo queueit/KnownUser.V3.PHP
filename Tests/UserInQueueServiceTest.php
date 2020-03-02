@@ -106,7 +106,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieDomain = "testDomain";	
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = false;
-	
+        $eventConfig->actionName = "QueueAction";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
 	
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(true, "queueId", null, "idle"));
@@ -118,6 +118,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->queueId == "queueId");
         $this->assertFalse($cookieProviderMock->expectCallAny('store'));
         $this->assertTrue($cookieProviderMock->expectCall('getState', 1, array("e1", 10, 'key', true)));
+        $this->assertTrue(strtolower($result->actionName) == strtolower('QueueAction'));
     }
 	
     public function test_validateQueueRequest_ValidState_ExtendableCookie_CookieExtensionFromConfig_DoNotRedirectDoStoreCookieWithExtension() {
@@ -127,7 +128,8 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieDomain = "testDomain";
         $eventConfig->cookieValidityMinute=10;
         $eventConfig->extendCookieValidity=true;
-         
+        $eventConfig->actionName = "QueueAction";
+        
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(true, "queueId", null, "disabled"));
 	
@@ -139,6 +141,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->queueId == "queueId");
      
         $this->assertTrue($cookieProviderMock->expectCall('store', 1, array("e1", 'queueId', null, 'testDomain', "disabled", "key")));
+        $this->assertTrue(strtolower($result->actionName) == strtolower('QueueAction'));
     }
 	
     public function test_validateQueueRequest_ValidState_NoExtendableCookie_DoNotRedirectDoNotStoreCookieWithExtension() {
@@ -147,6 +150,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->queueDomain = "testDomain";
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = true;
+        $eventConfig->actionName = "QueueAction";
 	
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(true, "queueId", 3, "idle"));
@@ -158,6 +162,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->eventId == 'e1');
         $this->assertTrue($result->queueId == "queueId");
         $this->assertFalse($cookieProviderMock->expectCallAny('store', 1));
+        $this->assertTrue(strtolower($result->actionName) == strtolower('QueueAction'));
     }
 	
     public function test_validateQueueRequest_NoCookie_TampredToken_RedirectToErrorPageWithHashError_DoNotStoreCookie() {
@@ -169,6 +174,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->extendCookieValidity = true;
         $eventConfig->version = 11;
         $url = "http://test.test.com?b=h";
+        $eventConfig->actionName = "QueueAction";
          
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(false, null, null, null));
@@ -176,10 +182,11 @@ class UserInQueueServiceTest extends UnitTestCase
         $token = $this->generateHash('e1','queueId', strval(time() + (3 * 60)), 'False', null, 'idle', $key);
         $token = str_replace("False", 'True', $token);
         $expectedErrorUrl = "https://testDomain.com/error/hash/?c=testCustomer&e=e1" .
-                "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
+                "&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
                 . "&cver=11"
+                . "&man=" . rawurlencode($eventConfig->actionName)
                 . "&queueittoken=" . $token
-                . "&t=" . urlencode($url);
+                . "&t=" . rawurlencode($url);
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
         $result = $testObject->validateQueueRequest($url, $token, $eventConfig, "testCustomer", $key);
@@ -194,6 +201,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue(time() - intval($timestamp) < 100);
         $urlWithoutTimeStamp = preg_replace("/&ts=[^&]*/", "", $result->redirectUrl);
         $this->assertTrue(strtolower($urlWithoutTimeStamp) == strtolower($expectedErrorUrl));
+        $this->assertTrue(strtolower($result->actionName) == strtolower($eventConfig->actionName));
     }
 	
     public function test_validateQueueRequest_NoCookie_ExpiredTimeStampInToken_RedirectToErrorPageWithTimeStampError_DoNotStoreCookie() {
@@ -204,16 +212,18 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = false;
         $eventConfig->version = 11;
+        $eventConfig->actionName = "Queue Action (._~-) !*|'\"";
         $url = "http://test.test.com?b=h";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(false, null, null, null));
         $token = $this->generateHash('e1','queueId', strval(time() - (3 * 60)), 'False', null, 'queue', $key);
 	
         $expectedErrorUrl = "https://testDomain.com/error/timestamp/?c=testCustomer&e=e1" .
-                  "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
-                    . "&cver=11"
+                  "&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
+                . "&cver=11"
+                . "&man=" . rawurlencode($eventConfig->actionName)
                 . "&queueittoken=" . $token
-                . "&t=" . urlencode($url);
+                . "&t=" . rawurlencode($url);
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
         $result = $testObject->validateQueueRequest($url, $token, $eventConfig, "testCustomer", $key);
@@ -229,6 +239,7 @@ class UserInQueueServiceTest extends UnitTestCase
 	
         $urlWithoutTimeStamp = preg_replace("/&ts=[^&]*/", "", $result->redirectUrl);
         $this->assertTrue(strtolower($urlWithoutTimeStamp) == strtolower($expectedErrorUrl));
+        $this->assertTrue($result->actionName == $eventConfig->actionName);
     }
 	
     public function test_validateQueueRequest_NoCookie_EventIdMismatch_RedirectToErrorPageWithEventIdMissMatchError_DoNotStoreCookie() {
@@ -238,17 +249,19 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->queueDomain = "testDomain.com";
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = true;
-        $eventConfig->version = 11;
+        $eventConfig->version = 10;
+        $eventConfig->actionName = "Queue Action (._~-) !*|'\"";
         $url = "http://test.test.com?b=h";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(false, null, null, null));
         $token = $this->generateHash('e1', 'queueId',strval(time() - (3 * 60)), 'False', null, 'queue', $key);
 	
         $expectedErrorUrl = "https://testDomain.com/error/eventid/?c=testCustomer&e=e2" .
-                "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
-                . "&cver=11"
+                "&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
+                . "&cver=10"
+                . "&man=" . rawurlencode($eventConfig->actionName)
                 . "&queueittoken=" . $token
-                . "&t=" . urlencode($url);
+                . "&t=" . rawurlencode($url);
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
         $result = $testObject->validateQueueRequest($url, $token, $eventConfig, "testCustomer", $key);
@@ -264,6 +277,7 @@ class UserInQueueServiceTest extends UnitTestCase
 	
         $urlWithoutTimeStamp = preg_replace("/&ts=[^&]*/", "", $result->redirectUrl);
         $this->assertTrue(strtolower($urlWithoutTimeStamp) == strtolower($expectedErrorUrl));
+        $this->assertTrue($result->actionName == $eventConfig->actionName);
     }
 	
     public function test_validateQueueRequest_NoCookie_ValidToken_ExtendableCookie_DoNotRedirect_StoreExtendableCookie() {
@@ -273,10 +287,9 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->queueDomain = "testDomain.com";
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->cookieDomain = "testDomain";
-	
         $eventConfig->extendCookieValidity = true;
-	
         $eventConfig->version = 11;
+        //$eventConfig->actionName = "QueueAction";
         $url = "http://test.test.com?b=h";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(false, null, null, null));
@@ -298,10 +311,9 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->queueDomain = "testDomain.com";
         $eventConfig->cookieValidityMinute = 30;
         $eventConfig->cookieDomain = "testDomain";
-	
         $eventConfig->extendCookieValidity = true;
-	
         $eventConfig->version = 11;
+        //$eventConfig->actionName = "QueueAction";
         $url = "http://test.test.com?b=h";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(false, null, null, null));
@@ -324,6 +336,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = true;
         $eventConfig->version = 11;
+        $eventConfig->actionName = "Queue Action (._~-) !*|'\"";
         $eventConfig->culture = 'en-US';
         $eventConfig->layoutName = 'testlayout';
 	
@@ -333,11 +346,12 @@ class UserInQueueServiceTest extends UnitTestCase
         $token = "";
 	
         $expectedRedirectUrl = "https://testDomain.com/?c=testCustomer&e=e1" .
-                "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
+                "&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
                 . "&cver=11"
+                . "&man=" . rawurlencode($eventConfig->actionName)
                 . "&cid=en-US"
                 . "&l=testlayout"
-                . "&t=" . urlencode($url);
+                . "&t=" . rawurlencode($url);
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
         $result = $testObject->validateQueueRequest($url, $token, $eventConfig, "testCustomer", $key);
@@ -357,6 +371,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = false;
         $eventConfig->version = 10;
+        $eventConfig->actionName = "Queue Action (._~-) !*|'\"";
         $eventConfig->culture = null;
         $eventConfig->layoutName = 'testlayout';
 	
@@ -366,8 +381,9 @@ class UserInQueueServiceTest extends UnitTestCase
         $token = "";
 	
         $expectedRedirectUrl = "https://testDomain.com/?c=testCustomer&e=e1" .
-                "&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
+                "&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
                 . "&cver=10"
+                . "&man=" . rawurlencode($eventConfig->actionName)
                 . "&l=testlayout";
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
@@ -378,6 +394,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->eventId == 'e1');
         $this->assertTrue($result->queueId == null);
         $this->assertTrue(strtolower($result->redirectUrl) == strtolower($expectedRedirectUrl));
+        $this->assertTrue(strtolower($result->actionName) == strtolower( $eventConfig->actionName));
 	}
 
     public function test_validateQueueRequest_NoCookie_InValidToken() {
@@ -388,6 +405,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->cookieValidityMinute = 10;
         $eventConfig->extendCookieValidity = true;
         $eventConfig->version = 11;
+        $eventConfig->actionName = "QueueAction";
         $eventConfig->culture = 'en-US';
         $eventConfig->layoutName = 'testlayout';
 		
@@ -404,6 +422,7 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->eventId == 'e1');
         $this->assertTrue($result->queueId == null);	
         $this->assertTrue(strpos($result->redirectUrl, "https://testDomain.com/error/hash/?c=testCustomer&e=e1") == 0);
+        $this->assertTrue(strtolower($result->actionName) == strtolower('QueueAction'));
     }
 	
     public function test_validateCancelRequest() {
@@ -412,7 +431,8 @@ class UserInQueueServiceTest extends UnitTestCase
         $eventConfig->eventId = "e1";
         $eventConfig->queueDomain = "testDomain.com";
         $eventConfig->cookieDomain = "testdomain";
-        $eventConfig->version = 10;      
+        $eventConfig->version = 10;
+        $eventConfig->actionName = "QueueAction";      
         $url = "http://test.test.com?b=h";
         $cookieProviderMock = new UserInQueueStateRepositoryMockClass ();
         array_push($cookieProviderMock->arrayReturns['getState'], new QueueIT\KnownUserV3\SDK\StateInfo(true, "queueid", 3, "idle"));
@@ -420,8 +440,10 @@ class UserInQueueServiceTest extends UnitTestCase
 	
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService($cookieProviderMock);
         $expectedUrl = "https://testDomain.com/cancel/testCustomer/e1/?c=testCustomer&e=e1"
-         ."&ver=v3-php-".QueueIT\KnownUserV3\SDK\UserInQueueService::SDK_VERSION
-         ."&cver=10&r=" ."http%3A%2F%2Ftest.test.com%3Fb%3Dh";
+         ."&ver=".QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion()
+         ."&cver=10"
+         ."&man=" . $eventConfig->actionName 
+         ."&r=http%3A%2F%2Ftest.test.com%3Fb%3Dh";
         $result = $testObject->validateCancelRequest($url, $eventConfig, "testCustomer", $key);
         $this->assertFalse($cookieProviderMock->expectCallAny('store'));
 	
@@ -430,17 +452,20 @@ class UserInQueueServiceTest extends UnitTestCase
         $this->assertTrue($result->queueId == "queueid");
 	
         $this->assertTrue($result->redirectUrl == $expectedUrl);
+        $this->assertTrue(strtolower($result->actionName) == strtolower($eventConfig->actionName));
     }
 
     public function test_getIgnoreActionResult() {
         $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueService(new UserInQueueStateRepositoryMockClass ());
-        $result = $testObject->getIgnoreActionResult();
+        $actionName = "IgnoreAction";
+        $result = $testObject->getIgnoreActionResult($actionName);
 	
         $this->assertFalse($result->doRedirect());
         $this->assertTrue($result->eventId == NULL);
         $this->assertTrue($result->queueId == NULL);
         $this->assertTrue($result->redirectUrl == NULL);
-        $this->assertTrue($result->actionType == "Ignore");        
+        $this->assertTrue($result->actionType == "Ignore"); 
+        $this->assertTrue($result->actionName == "IgnoreAction");         
     }
 
     public function generateHash($eventId, $queueId, $timestamp, $extendableCookie, $cookieValidityMinutes, $redirectType, $secretKey) {

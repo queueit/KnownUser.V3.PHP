@@ -78,7 +78,6 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
         if (!array_key_exists("EventId", $cookieNameValueMap)) {
             return false;
         }
-   
 		if (!array_key_exists("QueueId", $cookieNameValueMap)) {
             return false;
         }
@@ -88,7 +87,6 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
 		if (!array_key_exists("IssueTime", $cookieNameValueMap)) {
             return false;
         }
-
 		if (!array_key_exists("Hash", $cookieNameValueMap)) {
 			return false;
         }

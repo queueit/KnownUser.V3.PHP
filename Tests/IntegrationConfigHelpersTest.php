@@ -10,53 +10,27 @@ error_reporting(E_ALL);
 
 class ComparisonOperatorHelperTest extends UnitTestCase 
 {
-    function  test_evaluate_equals()
-    {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "Test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, true, "test1", "Test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "Test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, true, "test1", "Test1",NULL));
+    function  test_evaluate_equals() {
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, false, "test1", "Test1",NULL));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", false, true, "test1", "Test1",NULL));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "Test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, false, "test1", "test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Equals", true, true, "test1", "Test1",NULL));
     }
     
-    function  test_evaluate_contains()
-    {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains", false, false, "test_test1_test", "test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, false, "test_test1_test", "Test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, true, "test_test1_test", "Test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains", true, false, "test_test1_test", "Test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",true, true, "test_test1", "Test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",true, false, "test_test1", "test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, false, "test_dsdsdsdtest1", "*",NULL));
-    }
-    
-    function  test_evaluate_startsWith()
-    {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("StartsWith", false, false, "test1_test1_test", "test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("StartsWith",false, false, "test1_test1_test", "Test1",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("StartsWith", false, true, "test1_test1_test", "Test1",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("StartsWith", true, true, "test1_test1_test", "Test1",NULL));
-    }
-    
-    function  test_evaluate_endsWith()
-    {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EndsWith",false, false, "test1_test1_testshop", "shop",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EndsWith",false, false, "test1_test1_testshop2", "shop",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EndsWith", false, true, "test1_test1_testshop", "Shop",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EndsWith", true, true, "test1_test1_testshop", "Shop",NULL));
-    }
-    
-    function  test_evaluate_matchesWith()
-    {
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("MatchesWith",false, false, "test1_test1_testshop", "#.*shop.*#",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("MatchesWith",false, false, "test1_test1_testshop2", "#.*Shop.*#",NULL));
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("MatchesWith", false, true, "test1_test1_testshop", "#.*Shop.*#",NULL));
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("MatchesWith", true, true, "test1_test1_testshop", "#.*Shop.*#",NULL));
+    function  test_evaluate_contains() {
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains", false, false, "test_test1_test", "test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, false, "test_test1_test", "Test1",NULL));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, true, "test_test1_test", "Test1",NULL));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains", true, false, "test_test1_test", "Test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",true, true, "test_test1", "Test1",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",true, false, "test_test1", "test1",NULL));
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, false, "test_dsdsdsdtest1", "*",NULL));
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("Contains",false, false, "", "*",NULL));
     }
 
-    function test_evaluate_EqualsAny()
-    {
+    function test_evaluate_EqualsAny() {
         $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualsAny",false, false, "test1", NULL,array("test1")));
         $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualsAny",false, false, "test1", NULL,array("Test1")));
         $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualsAny",false, true, "test1", NULL,array("Test1")));
@@ -65,9 +39,7 @@ class ComparisonOperatorHelperTest extends UnitTestCase
         $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("EqualsAny",true, true, "test1", NULL,array("Test1")));
     }
 
-
-    function test_evaluate_ContainsAny()
-    {
+    function test_evaluate_ContainsAny() {
         $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("ContainsAny",false, false, "test_test1_test", NULL,array("test1")));
         $this->assertFalse( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("ContainsAny",false, false, "test_test1_test", NULL,array("Test1")));
         $this->assertTrue( QueueIT\KnownUserV3\SDK\ComparisonOperatorHelper::evaluate("ContainsAny",false, true, "test_test1_test", NULL,array("Test1")));
@@ -80,62 +52,57 @@ class ComparisonOperatorHelperTest extends UnitTestCase
 
 class UrlValidatorHelperTest extends UnitTestCase 
 {
-  function  test_evaluate()
+    function  test_evaluate()
     {
-          $triggerPart = array();
+        $triggerPart = array();
      
-            $triggerPart ["UrlPart"] = "PageUrl";
-            $triggerPart ["Operator"] = "Contains";
-            $triggerPart ["IsIgnoreCase"] = true;
-            $triggerPart ["IsNegative"] = false;
-            $triggerPart ["ValueToCompare"]= "http://test.tesdomain.com:8080/test?q=1";
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart, "http://test.tesdomain.com:8080/test?q=2"));
+        $triggerPart ["UrlPart"] = "PageUrl";
+        $triggerPart ["Operator"] = "Contains";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $triggerPart ["ValueToCompare"]= "http://test.tesdomain.com:8080/test?q=1";
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart, "http://test.tesdomain.com:8080/test?q=2"));
 
-           $triggerPart ["ValueToCompare"] = "/Test/t1";
-           $triggerPart ["UrlPart"] = "PagePath";
-           $triggerPart ["Operator"]= "Equals";
-           $triggerPart ["IsIgnoreCase"] = true;
-           $triggerPart ["IsNegative"] = false;
-           $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,  "http://test.tesdomain.com:8080/test/t1?q=2&y02"));
+        $triggerPart ["ValueToCompare"] = "/Test/t1";
+        $triggerPart ["UrlPart"] = "PagePath";
+        $triggerPart ["Operator"]= "Equals";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,  "http://test.tesdomain.com:8080/test/t1?q=2&y02"));
    
+        $triggerPart ["UrlPart"] = "HostName";
+        $triggerPart ["ValueToCompare"] = "test.tesdomain.com";
+        $triggerPart ["Operator"]= "Contains";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart, "http://m.test.tesdomain.com:8080/test?q=2"));
 
+        $triggerPart ["UrlPart"] = "HostName";
+        $triggerPart ["ValueToCompare"] = "test.tesdomain.com";
+        $triggerPart ["Operator"]= "Contains";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = true;
+        $this->assertFalse( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,"http://m.test.tesdomain.com:8080/test?q=2"));
 
-            $triggerPart ["UrlPart"] = "HostName";
-            $triggerPart ["ValueToCompare"] = "test.tesdomain.com";
-            $triggerPart ["Operator"]= "Contains";
-            $triggerPart ["IsIgnoreCase"] = true;
-            $triggerPart ["IsNegative"] = false;
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart, "http://m.test.tesdomain.com:8080/test?q=2"));
-
-
-            $triggerPart ["UrlPart"] = "HostName";
-            $triggerPart ["ValueToCompare"] = "test.tesdomain.com";
-            $triggerPart ["Operator"]= "Contains";
-            $triggerPart ["IsIgnoreCase"] = true;
-            $triggerPart ["IsNegative"] = true;
-            $this->assertFalse( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,"http://m.test.tesdomain.com:8080/test?q=2"));
-
-            $triggerPart ["UrlPart"] = "HostName";
-            $triggerPart ["ValuesToCompare"] = array("balablaba","test.tesdomain.com");
-            $triggerPart ["Operator"]= "Contains";
-            $triggerPart ["IsIgnoreCase"] = true;
-            $triggerPart ["IsNegative"] = false;
-            $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,"http://m.test.tesdomain.com:8080/test?q=2"));
-
-            
-           $triggerPart ["ValuesToCompare"] = array("ssss_SSss","/Test/t1");
-           $triggerPart ["UrlPart"] = "PagePath";
-           $triggerPart ["Operator"]= "EqualsAny";
-           $triggerPart ["IsIgnoreCase"] = true;
-           $triggerPart ["IsNegative"] = false;
-           $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,  "http://test.tesdomain.com:8080/test/t1?q=2&y02"));
-
+        $triggerPart ["UrlPart"] = "HostName";
+        $triggerPart ["ValuesToCompare"] = array("balablaba","test.tesdomain.com");
+        $triggerPart ["Operator"]= "Contains";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,"http://m.test.tesdomain.com:8080/test?q=2"));
+       
+        $triggerPart ["ValuesToCompare"] = array("ssss_SSss","/Test/t1");
+        $triggerPart ["UrlPart"] = "PagePath";
+        $triggerPart ["Operator"]= "EqualsAny";
+        $triggerPart ["IsIgnoreCase"] = true;
+        $triggerPart ["IsNegative"] = false;
+        $this->assertTrue( QueueIT\KnownUserV3\SDK\UrlValidatorHelper::evaluate($triggerPart,  "http://test.tesdomain.com:8080/test/t1?q=2&y02"));
     }
 }
 
 class CookieValidatorHelperTest extends UnitTestCase 
 {
-  function  test_evaluate()
+    function  test_evaluate()
     {
         $triggerPart = array();
         $triggerPart ["CookieName"] = "c1";
@@ -187,7 +154,8 @@ class CookieValidatorHelperTest extends UnitTestCase
 
 class UserAgentValidatorHelperTest extends UnitTestCase 
 {
-	function test_evaluate() {
+	function test_evaluate() 
+    {
         $triggerPart = array();
         $triggerPart ["Operator"] = "Contains";
         $triggerPart ["IsIgnoreCase"] = false;
@@ -234,7 +202,8 @@ class UserAgentValidatorHelperTest extends UnitTestCase
 
 class HttoheaderValidatorHelperTest extends UnitTestCase 
 {
-	function test_evaluate() {
+	function test_evaluate() 
+    {
         $triggerPart = array();
         $triggerPart ["Operator"] = "Contains";
         $triggerPart ["IsIgnoreCase"] = false;
@@ -293,7 +262,7 @@ class HttoheaderValidatorHelperTest extends UnitTestCase
 
 class IntegrationEvaluatorTest extends UnitTestCase 
 {
-   function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched()
+    function test_getMatchedIntegrationConfig_OneTrigger_And_NotMatched()
     {
       $request = new HttpRequestProviderMock();
       $request->cookieManager = new IntegrationConfigHelpersCookieManagerMock();
@@ -524,7 +493,6 @@ class IntegrationEvaluatorTest extends UnitTestCase
 
     }
 
-
     function test_getMatchedIntegrationConfig_OneTrigger_Or_Matched()
     {
         $request = new HttpRequestProviderMock();
@@ -567,6 +535,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $this->assertTrue($result["Name"]==="integration1");
 
     }
+
     function test_getMatchedIntegrationConfig_TwoTriggers_Matched()
     {
         $request = new HttpRequestProviderMock();
@@ -624,6 +593,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
         $this->assertTrue($result["Name"]=="integration1");
  
     }
+
     function test_getMatchedIntegrationConfig_ThreeIntegrationsInOrder_SecondMatched()
     {
         $request = new HttpRequestProviderMock();
@@ -693,8 +663,7 @@ class IntegrationEvaluatorTest extends UnitTestCase
      
         $result = $testObject->getMatchedIntegrationConfig($integrationConfig,$url,$request);
         $this->assertTrue($result["Name"]=="integration1");
-    }
-       
+    } 
 }
 
 class IntegrationConfigHelpersCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManager

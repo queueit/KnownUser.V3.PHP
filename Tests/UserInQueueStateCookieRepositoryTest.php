@@ -37,6 +37,7 @@ class UserInQueueStateCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICook
         }
         return $this->cookieList[$cookieName]["value"];
     }
+
     public function getCookieArray()
     {
         return array();

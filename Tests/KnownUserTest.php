@@ -2,10 +2,10 @@
 #has already been included in TestSuite.php
 #require_once( __DIR__ . '/vendor/simpletest/simpletest/autorun.php');
 
-require_once( __DIR__ . '/../KnownUser.php');
-require_once( __DIR__ . '/HttpRequestProviderMock.php');
-require_once( __DIR__ . '/../UserInQueueService.php');
-require_once( __DIR__ . '/../Models.php');
+require_once(__DIR__ . '/../KnownUser.php');
+require_once(__DIR__ . '/HttpRequestProviderMock.php');
+require_once(__DIR__ . '/../UserInQueueService.php');
+require_once(__DIR__ . '/../Models.php');
 
 error_reporting(E_ALL);
 
@@ -13,12 +13,14 @@ class KnownUserCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManag
 {
     public $debugInfoCookie;
     public $cookieArray;
-    
-    public function getCookie($cookieName) {
+
+    public function getCookie($cookieName)
+    {
         return $this->debugInfoCookie;
     }
 
-    public function setCookie($name, $value, $expire, $domain) {
+    public function setCookie($name, $value, $expire, $domain)
+    {
         if ($domain == NULL) {
             $domain = "";
         }
@@ -31,21 +33,22 @@ class KnownUserCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManag
     }
 }
 
-
-class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueService {
-
+class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueService
+{
     public $arrayFunctionCallsArgs;
     public $arrayReturns;
     public $validateCancelRequestResult;
+    public $validateCancelRequestRaiseException;
     public $validateQueueRequestResult;
+    public $validateQueueRequestRaiseException;
 
-
-    function __construct() {
+    function __construct()
+    {
         $this->arrayFunctionCallsArgs = array(
             'validateRequest' => array(),
             'extendQueueCookie' => array(),
             'validateCancelRequest' => array(),
-            'getIgnoreActionResult'=>array()
+            'getIgnoreActionResult' => array()
         );
 
         $this->arrayReturns = array(
@@ -56,42 +59,69 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
     }
 
     public function validateQueueRequest(
-    $currentPageUrl, $queueitToken, QueueIT\KnownUserV3\SDK\QueueEventConfig $config, $customerId, $secretKey) {
+        $currentPageUrl,
+        $queueitToken,
+        QueueIT\KnownUserV3\SDK\QueueEventConfig
+        $config,
+        $customerId,
+        $secretKey
+    ) {
         array_push($this->arrayFunctionCallsArgs['validateRequest'], array(
             $currentPageUrl,
             $queueitToken,
             $config,
             $customerId,
-            $secretKey));
+            $secretKey
+        ));
+
+
+        if ($this->validateQueueRequestRaiseException)
+            throw new Exception("exception");
+
+        else
             return $this->validateQueueRequestResult;
     }
 
     public function validateCancelRequest(
-        $currentPageUrl,QueueIT\KnownUserV3\SDK\CancelEventConfig $config, $customerId, $secretKey) {
-            array_push($this->arrayFunctionCallsArgs['validateCancelRequest'], array(
-                $currentPageUrl,
-                $config,
-                $customerId,
-                $secretKey));
-                return $this->validateCancelRequestResult;
-        }
+        $currentPageUrl,
+        QueueIT\KnownUserV3\SDK\CancelEventConfig $config,
+        $customerId,
+        $secretKey
+    ) {
+        array_push($this->arrayFunctionCallsArgs['validateCancelRequest'], array(
+            $currentPageUrl,
+            $config,
+            $customerId,
+            $secretKey
+        ));
+        if ($this->validateCancelRequestRaiseException)
+            throw new Exception("exception");
+        else
+            return $this->validateCancelRequestResult;
+    }
 
-    public function getIgnoreActionResult() {
-            array_push($this->arrayFunctionCallsArgs['getIgnoreActionResult'], "call");
-            return new QueueIT\KnownUserV3\SDK\RequestValidationResult(QueueIT\KnownUserV3\SDK\ActionTypes::IgnoreAction, null, null, null, null);
-        }
+    public function getIgnoreActionResult($actionName)
+    {
+        array_push($this->arrayFunctionCallsArgs['getIgnoreActionResult'], "call");
+        return new QueueIT\KnownUserV3\SDK\RequestValidationResult(QueueIT\KnownUserV3\SDK\ActionTypes::IgnoreAction, null, null, null, null, $actionName);
+    }
 
     public function extendQueueCookie(
-    $eventId, $cookieValidityMinute, $cookieDomain, $secretKey
+        $eventId,
+        $cookieValidityMinute,
+        $cookieDomain,
+        $secretKey
     ) {
         array_push($this->arrayFunctionCallsArgs['extendQueueCookie'], array(
             $eventId,
             $cookieValidityMinute,
             $cookieDomain,
-            $secretKey));
+            $secretKey
+        ));
     }
 
-    public function expectCall($functionName, $secquenceNo, array $argument) {
+    public function expectCall($functionName, $secquenceNo, array $argument)
+    {
         if (count($this->arrayFunctionCallsArgs[$functionName]) >= $secquenceNo) {
 
             $argArr = $this->arrayFunctionCallsArgs[$functionName][$secquenceNo - 1];
@@ -109,7 +139,8 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
         return false;
     }
 
-    public function expectCallAny($functionName) {
+    public function expectCallAny($functionName)
+    {
         if (count($this->arrayFunctionCallsArgs[$functionName]) >= 1) {
             return true;
         }
@@ -117,8 +148,8 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
     }
 }
 
-class KnownUserTest extends UnitTestCase {
-
+class KnownUserTest extends UnitTestCase
+{
     function setHttpHeaderRequestProvider()
     {
         $httpRequestProvider = new HttpRequestProviderMock();
@@ -127,78 +158,84 @@ class KnownUserTest extends UnitTestCase {
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
     }
-    function test_cancelRequestByLocalConfig() {
 
+    function test_cancelRequestByLocalConfig()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-			"x-forwarded-proto" => "xfp");
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-proto" => "xfp"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
 
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
-        
+
         $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
         $cancelEventconfig->cookieDomain = "cookiedomain";
         $cancelEventconfig->eventId = "eventid";
         $cancelEventconfig->queueDomain = "queuedomain";
         $cancelEventconfig->version = 1;
 
-        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("url","queueittoken" ,$cancelEventconfig,"customerid","secretkey");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("url", "queueittoken", $cancelEventconfig, "customerid", "secretkey");
 
-        $this->assertTrue("url"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0]);
-        $this->assertTrue("customerid"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
-        $this->assertTrue("secretkey"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
-        $this->assertTrue("eventid"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
-        $this->assertTrue("queuedomain"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
-        $this->assertTrue("cookiedomain"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
-        $this->assertTrue("1"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
+        $this->assertTrue("url" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0]);
+        $this->assertTrue("customerid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
+        $this->assertTrue("secretkey" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
+        $this->assertTrue("eventid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
+        $this->assertTrue("queuedomain" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
+        $this->assertTrue("cookiedomain" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
+        $this->assertTrue("1" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
         $this->assertFalse($result->isAjaxResult);
     }
-    
-    function test_cancelRequestByLocalConfig_AjaxCall() {
+
+    function test_cancelRequestByLocalConfig_AjaxCall()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",  
-			"x-forwarded-proto" => "xfp");
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",
+            "x-forwarded-proto" => "xfp"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
 
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
-        
+
         $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
         $cancelEventconfig->cookieDomain = "cookiedomain";
         $cancelEventconfig->eventId = "eventid";
         $cancelEventconfig->queueDomain = "queuedomain";
         $cancelEventconfig->version = 1;
 
-        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("url","queueittoken" ,$cancelEventconfig,"customerid","secretkey");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("url", "queueittoken", $cancelEventconfig, "customerid", "secretkey");
 
-        $this->assertTrue("http://url"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0]);
-        $this->assertTrue("customerid"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
-        $this->assertTrue("secretkey"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
-        $this->assertTrue("eventid"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
-        $this->assertTrue("queuedomain"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
-        $this->assertTrue("cookiedomain"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
-        $this->assertTrue("1"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
+        $this->assertTrue("http://url" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0]);
+        $this->assertTrue("customerid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
+        $this->assertTrue("secretkey" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
+        $this->assertTrue("eventid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
+        $this->assertTrue("queuedomain" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
+        $this->assertTrue("cookiedomain" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
+        $this->assertTrue("1" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
         $this->assertTrue($result->isAjaxResult);
 
-        $this->assertTrue(strtolower($result->getAjaxRedirectUrl())=="http%3a%2f%2fq.qeuue-it.com");
+        $this->assertTrue(strtolower($result->getAjaxRedirectUrl()) == "http%3a%2f%2fq.qeuue-it.com");
     }
-    function test_cancelRequestByLocalConfig_empty_eventId() {
+
+    function test_cancelRequestByLocalConfig_empty_eventId()
+    {
 
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array();
@@ -214,13 +251,15 @@ class KnownUserTest extends UnitTestCase {
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("targeturl", "queueittoken",$eventconfig, "customerid", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("targeturl", "queueittoken", $eventconfig, "customerid", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "eventId from cancelConfig can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_cancelRequestByLocalConfig_empty_secreteKey() {
+
+    function test_cancelRequestByLocalConfig_empty_secreteKey()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
@@ -241,8 +280,10 @@ class KnownUserTest extends UnitTestCase {
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_cancelRequestByLocalConfig_empty_queueDomain() {
-$this->setHttpHeaderRequestProvider();
+
+    function test_cancelRequestByLocalConfig_empty_queueDomain()
+    {
+        $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
         $eventconfig->cookieDomain = "cookieDomain";
@@ -258,7 +299,8 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_cancelRequestByLocalConfig_empty_customerId() {
+    function test_cancelRequestByLocalConfig_empty_customerId()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
@@ -276,7 +318,8 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($exceptionThrown);
     }
 
-    function test_cancelRequestByLocalConfig_empty_targeturl() {
+    function test_cancelRequestByLocalConfig_empty_targeturl()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
@@ -292,8 +335,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    
-    function test_extendQueueCookie_null_EventId() {
+
+    function test_extendQueueCookie_null_EventId()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $httpRequestProvider = new HttpRequestProviderMock();
@@ -311,7 +355,8 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($exceptionThrown);
     }
 
-    function test_extendQueueCookie_null_SecretKey() {
+    function test_extendQueueCookie_null_SecretKey()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $httpRequestProvider = new HttpRequestProviderMock();
@@ -329,9 +374,10 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($exceptionThrown);
     }
 
-    function test_extendQueueCookie_Invalid_CookieValidityMinute() {
+    function test_extendQueueCookie_Invalid_CookieValidityMinute()
+    {
         $this->setHttpHeaderRequestProvider();
-        
+
         $exceptionThrown = false;
         try {
             QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", "invalidInt", "cookieDomain", "secretkey");
@@ -341,7 +387,8 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($exceptionThrown);
     }
 
-    function test_extendQueueCookie_Negative_CookieValidityMinute() {
+    function test_extendQueueCookie_Negative_CookieValidityMinute()
+    {
         $this->setHttpHeaderRequestProvider();
         $exceptionThrown = false;
         try {
@@ -352,7 +399,8 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($exceptionThrown);
     }
 
-    function test_extendQueueCookie() {
+    function test_extendQueueCookie()
+    {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
@@ -364,7 +412,8 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($userInQueueservice->expectCall('extendQueueCookie', 1, array("eventid", 10, "cookieDomain", "secretkey")));
     }
 
-    function test_resolveQueueRequestByLocalConfig_empty_eventId() {
+    function test_resolveQueueRequestByLocalConfig_empty_eventId()
+    {
         $this->setHttpHeaderRequestProvider();
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
         $eventconfig->cookieDomain = "cookieDomain";
@@ -385,7 +434,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig_empty_secreteKey() {
+
+    function test_resolveQueueRequestByLocalConfig_empty_secreteKey()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -406,7 +457,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig_empty_queueDomain() {
+
+    function test_resolveQueueRequestByLocalConfig_empty_queueDomain()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -427,7 +480,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig_empty_customerId() {
+
+    function test_resolveQueueRequestByLocalConfig_empty_customerId()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -448,7 +503,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig_Invalid_extendCookieValidity() {
+
+    function test_resolveQueueRequestByLocalConfig_Invalid_extendCookieValidity()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -468,8 +525,10 @@ $this->setHttpHeaderRequestProvider();
             $exceptionThrown = $e->getMessage() == "extendCookieValidity from queueConfig should be valid boolean.";
         }
         $this->assertTrue($exceptionThrown);
-    }  
-    function test_resolveQueueRequestByLocalConfig_Invalid_cookieValidityMinute() {
+    }
+
+    function test_resolveQueueRequestByLocalConfig_Invalid_cookieValidityMinute()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
@@ -490,7 +549,9 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig_zero_cookieValidityMinute() {
+
+    function test_resolveQueueRequestByLocalConfig_zero_cookieValidityMinute()
+    {
         $this->setHttpHeaderRequestProvider();
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
         $eventconfig->cookieDomain = "cookieDomain";
@@ -510,10 +571,12 @@ $this->setHttpHeaderRequestProvider();
         }
         $this->assertTrue($exceptionThrown);
     }
-    function test_resolveQueueRequestByLocalConfig() {
+
+    function test_resolveQueueRequestByLocalConfig()
+    {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
@@ -532,20 +595,23 @@ $this->setHttpHeaderRequestProvider();
         $this->assertTrue($userInQueueservice->expectCall('validateRequest', 1, array("targeturl", "queueIttoken", $eventconfig, "customerid", "secretkey")));
         $this->assertFalse($result->isAjaxResult);
     }
-    function test_resolveQueueRequestByLocalConfig_AjaxCall() {
+
+    function test_resolveQueueRequestByLocalConfig_AjaxCall()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",  
-			"x-forwarded-proto" => "xfp");
+
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",
+            "x-forwarded-proto" => "xfp"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
 
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
@@ -563,36 +629,37 @@ $this->setHttpHeaderRequestProvider();
 
         $this->assertTrue($userInQueueservice->expectCall('validateRequest', 1, array("http://url", "queueIttoken", $eventconfig, "customerid", "secretkey")));
         $this->assertTrue($result->isAjaxResult);
-        $this->assertTrue(strtolower($result->getAjaxRedirectUrl())=="http%3a%2f%2fq.qeuue-it.com");
+        $this->assertTrue(strtolower($result->getAjaxRedirectUrl()) == "http%3a%2f%2fq.qeuue-it.com");
     }
 
-
-    function test_validateRequestByIntegrationConfig_empty_currentUrl() {
+    function test_validateRequestByIntegrationConfig_empty_currentUrl()
+    {
         $this->setHttpHeaderRequestProvider();
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("", "queueIttoken", "{}","customerId", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("", "queueIttoken", "{}", "customerId", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "currentUrlWithoutQueueITToken can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
-     function test_validateRequestByIntegrationConfig_empty_integrationsConfigString() {
+
+    function test_validateRequestByIntegrationConfig_empty_integrationsConfigString()
+    {
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("currentUrl", "queueIttoken",Null,"customerId", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("currentUrl", "queueIttoken", Null, "customerId", "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "integrationsConfigString can not be null or empty.";
         }
         $this->assertTrue($exceptionThrown);
     }
 
-  
-    function test_validateRequestByIntegrationConfig() {
-      
+    function test_validateRequestByIntegrationConfig()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
-        $httpRequestProvider->userAgent="googlebot";
+        $httpRequestProvider->userAgent = "googlebot";
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
@@ -601,8 +668,7 @@ $this->setHttpHeaderRequestProvider();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
- $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
-
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
 
         $integrationConfigString = <<<EOT
             {
@@ -652,7 +718,7 @@ $this->setHttpHeaderRequestProvider();
             }
 EOT;
 
-       $result =  QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $result =  QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
         $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com?event1=true");
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][1] == "queueIttoken");
@@ -670,21 +736,21 @@ EOT;
         $this->assertFalse($result->isAjaxResult);
     }
 
-    
-    function test_validateRequestByIntegrationConfig_AjaxCall() {
-
+    function test_validateRequestByIntegrationConfig_AjaxCall()
+    {
         $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
 
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"a" => "b", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2ftest.com%3fevent1%3dtrue",  
-			"e" => "f");
-        $httpRequestProvider->userAgent="googlebot";
+            "a" => "b",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2ftest.com%3fevent1%3dtrue",
+            "e" => "f"
+        );
+        $httpRequestProvider->userAgent = "googlebot";
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
@@ -753,11 +819,11 @@ EOT;
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][2]->cookieDomain == ".test.com");
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][2]->version == 3);
         $this->assertTrue($result->isAjaxResult);
-        $this->assertTrue(strtolower($result->getAjaxRedirectUrl())=="http%3a%2f%2fq.qeuue-it.com");
+        $this->assertTrue(strtolower($result->getAjaxRedirectUrl()) == "http%3a%2f%2fq.qeuue-it.com");
     }
 
-    function test_validateRequestByIntegrationConfig_NotMatch() 
-	{
+    function test_validateRequestByIntegrationConfig_NotMatch()
+    {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
@@ -781,12 +847,12 @@ EOT;
         $this->assertFalse($result->doRedirect());
     }
 
-    function test_validateRequestByIntegrationConfig_ForcedTargeturl() 
-	{
+    function test_validateRequestByIntegrationConfig_ForcedTargeturl()
+    {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
 
@@ -834,21 +900,23 @@ EOT;
         QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
 
         $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
-        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com");        
+        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com");
     }
-    function test_validateRequestByIntegrationConfig_ForcedTargeturl_AjaxCall() 
-	{
+
+    function test_validateRequestByIntegrationConfig_ForcedTargeturl_AjaxCall()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"a" => "b", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2fabcdef.com%3fevent1%3dtrue",  
-			"e" => "f");
+            "a" => "b",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2fabcdef.com%3fevent1%3dtrue",
+            "e" => "f"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
         $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
 
@@ -893,18 +961,18 @@ EOT;
             }
 EOT;
 
-$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
 
         $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
-        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com");  
-        $this->assertTrue($result->isAjaxResult);      
+        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com");
+        $this->assertTrue($result->isAjaxResult);
     }
 
-    function test_validateRequestByIntegrationConfig_ForecedTargeturl() 
-	{
+    function test_validateRequestByIntegrationConfig_ForecedTargeturl()
+    {
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
@@ -956,11 +1024,12 @@ EOT;
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "http://test.com");
     }
 
-    function test_validateRequestByIntegrationConfig_EventTargetUrl() {
+    function test_validateRequestByIntegrationConfig_EventTargetUrl()
+    {
 
         $this->setHttpHeaderRequestProvider();
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
@@ -1006,23 +1075,25 @@ EOT;
             }
 EOT;
 
-		QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
-		$this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
-		$this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "");
-	}
+        QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
+        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "");
+    }
 
-    function test_validateRequestByIntegrationConfig_EventTargetUrl_AjaxCall() {
+    function test_validateRequestByIntegrationConfig_EventTargetUrl_AjaxCall()
+    {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"a" => "b", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2ftest.com%3fevent1%3dtrue",  
-			"e" => "f");
+            "a" => "b",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2ftest.com%3fevent1%3dtrue",
+            "e" => "f"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
 
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue","eventid","","http://q.qeuue-it.com","");
+        $userInQueueservice->validateQueueRequestResult =  new QueueIT\KnownUserV3\SDK\RequestValidationResult("Queue", "eventid", "", "http://q.qeuue-it.com", "", null);
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
@@ -1068,23 +1139,24 @@ EOT;
             }
 EOT;
 
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
-		$this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateRequest']) == 1);
         $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateRequest'][0][0] == "");
         $this->assertTrue($result->isAjaxResult);
-	}
-    function test_validateRequestByIntegrationConfig_CancelAction() 
+    }
+
+    function test_validateRequestByIntegrationConfig_CancelAction()
     {
         $this->setHttpHeaderRequestProvider();
 
-		$userInQueueservice = new UserInQueueServiceMock();
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
-		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
-		$var = "some text";
-		$integrationConfigString = <<<EOT
+        $var = "some text";
+        $integrationConfigString = <<<EOT
 			{
 				"Description": "test",
 				"Integrations": [
@@ -1119,37 +1191,38 @@ EOT;
 			}
 EOT;
 
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
-		$this->assertTrue($result->redirectUrl =="redirectUrl");
-		$this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest']) == 1);
-		$this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0] == "http://test.com?event1=true");
-		$this->assertTrue("customerid"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
-		$this->assertTrue("secretkey"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
-		$this->assertTrue("event1"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
-		$this->assertTrue("knownusertest.queue-it.net"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
-		$this->assertTrue(".test.com"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
-        $this->assertTrue("3"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $this->assertTrue($result->redirectUrl == "redirectUrl");
+        $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest']) == 1);
+        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0] == "http://test.com?event1=true");
+        $this->assertTrue("customerid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
+        $this->assertTrue("secretkey" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
+        $this->assertTrue("event1" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
+        $this->assertTrue("knownusertest.queue-it.net" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
+        $this->assertTrue(".test.com" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
+        $this->assertTrue("3" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
         $this->assertFalse($result->isAjaxResult);
-	}
+    }
 
-    function test_validateRequestByIntegrationConfig_CancelAction_AjaxCall() 
+    function test_validateRequestByIntegrationConfig_CancelAction_AjaxCall()
     {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"a" => "b", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",  
-			"e" => "f");
+            "a" => "b",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",
+            "e" => "f"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
-		$userInQueueservice = new UserInQueueServiceMock();
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
-		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null);
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
 
-		$var = "some text";
-		$integrationConfigString = <<<EOT
+        $var = "some text";
+        $integrationConfigString = <<<EOT
 			{
 				"Description": "test",
 				"Integrations": [
@@ -1186,29 +1259,30 @@ EOT;
 
         $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
 
-		$this->assertTrue(strtolower($result->getAjaxRedirectUrl()) =="http%3a%2f%2fq.qeuue-it.com");
-		$this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest']) == 1);
-		$this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0] == "http://url");
-		$this->assertTrue("customerid"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
-		$this->assertTrue("secretkey"== $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
-		$this->assertTrue("event1"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
-		$this->assertTrue("knownusertest.queue-it.net"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
-		$this->assertTrue(".test.com"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
-        $this->assertTrue("3"==$userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
+        $this->assertTrue(strtolower($result->getAjaxRedirectUrl()) == "http%3a%2f%2fq.qeuue-it.com");
+        $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest']) == 1);
+        $this->assertTrue($userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][0] == "http://url");
+        $this->assertTrue("customerid" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][2]);
+        $this->assertTrue("secretkey" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][3]);
+        $this->assertTrue("event1" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->eventId);
+        $this->assertTrue("knownusertest.queue-it.net" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->queueDomain);
+        $this->assertTrue(".test.com" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->cookieDomain);
+        $this->assertTrue("3" == $userInQueueservice->arrayFunctionCallsArgs['validateCancelRequest'][0][1]->version);
         $this->assertTrue($result->isAjaxResult);
-	}
-    function test_validateRequestByIntegrationConfig_IgnoreAction() 
+    }
+
+    function test_validateRequestByIntegrationConfig_IgnoreAction()
     {
-$this->setHttpHeaderRequestProvider();
+        $this->setHttpHeaderRequestProvider();
 
-		$userInQueueservice = new UserInQueueServiceMock();
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
 
-		$var = "some text";
-		$integrationConfigString = <<<EOT
+        $var = "some text";
+        $integrationConfigString = <<<EOT
 			{
 				"Description": "test",
 				"Integrations": [
@@ -1243,31 +1317,33 @@ $this->setHttpHeaderRequestProvider();
 			}
 EOT;
 
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
-		$this->assertTrue($result->actionType =="Ignore");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $this->assertTrue($result->actionType == "Ignore");
         $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['getIgnoreActionResult']) == 1);
         $this->assertFalse($result->isAjaxResult);
+        $this->assertTrue($result->actionName == "event1action");
     }
-    function test_validateRequestByIntegrationConfig_IgnoreAction_AjaxCall() 
+
+    function test_validateRequestByIntegrationConfig_IgnoreAction_AjaxCall()
     {
         $httpRequestProvider = new HttpRequestProviderMock();
         $httpRequestProvider->headerArray = array(
-			"a" => "b", 
-			"c" => "d", 
-            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",  
-			"e" => "f");
+            "a" => "b",
+            "c" => "d",
+            "x-queueit-ajaxpageurl" => "http%3a%2f%2furl",
+            "e" => "f"
+        );
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
         $r->setAccessible(true);
         $r->setValue(null, $httpRequestProvider);
 
-		$userInQueueservice = new UserInQueueServiceMock();
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
-
-		$var = "some text";
-		$integrationConfigString = <<<EOT
+        $var = "some text";
+        $integrationConfigString = <<<EOT
 			{
 				"Description": "test",
 				"Integrations": [
@@ -1302,37 +1378,39 @@ EOT;
 			}
 EOT;
 
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
-		$this->assertTrue($result->actionType =="Ignore");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
+        $this->assertTrue($result->actionType == "Ignore");
         $this->assertTrue(count($userInQueueservice->arrayFunctionCallsArgs['getIgnoreActionResult']) == 1);
         $this->assertTrue($result->isAjaxResult);
+        $this->assertTrue($result->actionName == "event1action");
     }
-    
-	function test_validateRequestByIntegrationConfig_debug() 
-	{
-		$userInQueueservice = new UserInQueueServiceMock();
+
+    function test_validateRequestByIntegrationConfig_debug()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
-		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
-		$httpRequestProvider->userHostAddress ="userIP";
-		$httpRequestProvider->headerArray = array(
-			"via" => "v", 
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-			"x-forwarded-host" => "xfh", 
-			"x-forwarded-proto" => "xfp");
-		$httpRequestProvider->absoluteUri="OriginalURL";
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
-		$r->setAccessible(true);
-		$r->setValue(null, $httpRequestProvider);
-		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
-		$var = "some text";
-		$integrationConfigString = <<<EOT
+        $var = "some text";
+        $integrationConfigString = <<<EOT
 			{
 				"Description": "test",
 				"Integrations": [
@@ -1366,54 +1444,60 @@ EOT;
 				"ConfigDataVersion": "1.0.0.1"
 			}
 EOT;
-		$token = $this->generateHashDebugValidHash("secretkey");
-		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true&queueittoken=". $this->generateHashDebugValidHash("secretkey"), 
-						$token , $integrationConfigString, "customerid", "secretkey");
-               
-		$expectedCookie= 
-		"TargetUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|CancelConfig=EventId:event1&Version:3&QueueDomain:knownusertest.queue-it.net&CookieDomain:.test.com".
-		"|OriginalUrl=OriginalURL".
-		"|ServerUtcTime=".$timestamp.
-		"|RequestIP=userIP".
-		"|RequestHttpHeader_Via=v".
-		"|RequestHttpHeader_Forwarded=f".
-		"|RequestHttpHeader_XForwardedFor=xff".
-		"|RequestHttpHeader_XForwardedHost=xfh".
-		"|RequestHttpHeader_XForwardedProto=xfp".
-		"|MatchedConfig=event1action".
-		"|ConfigVersion=3".
-		"|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce";
-		
-		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==$expectedCookie );
-	}
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "http://test.com?event1=true&queueittoken=" . $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $token,
+            $integrationConfigString,
+            "customerid",
+            "secretkey"
+        );
 
+        $expectedCookie =
+            "TargetUrl=http://test.com?event1=true&queueittoken=" . $token .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|CancelConfig=EventId:event1&Version:3&ActionName:event1action&QueueDomain:knownusertest.queue-it.net&CookieDomain:.test.com" .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=userIP" .
+            "|RequestHttpHeader_Via=v" .
+            "|RequestHttpHeader_Forwarded=f" .
+            "|RequestHttpHeader_XForwardedFor=xff" .
+            "|RequestHttpHeader_XForwardedHost=xfh" .
+            "|RequestHttpHeader_XForwardedProto=xfp" .
+            "|MatchedConfig=event1action" .
+            "|ConfigVersion=3" .
+            "|PureUrl=http://test.com?event1=true&queueittoken=" . $token;
 
-	function test_validateRequestByIntegrationConfig_withoutmatch_debug() 
-	{
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
 
-		$userInQueueservice = new UserInQueueServiceMock();
+    function test_validateRequestByIntegrationConfig_withoutmatch_debug()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
-		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
-		$httpRequestProvider->absoluteUri="OriginalURL";
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
-		$r->setAccessible(true);
-		$r->setValue(null, $httpRequestProvider);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
 
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
-		$r->setAccessible(true);
-		$r->setValue(null, NULL);
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
 
-		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
-	$integrationConfigString = <<<EOT
+        $integrationConfigString = <<<EOT
 		{
 			"Description": "test",
 			"Integrations": [
@@ -1447,51 +1531,59 @@ EOT;
 			"ConfigDataVersion": "1.0.0.1"
 		}
 EOT;
-	
-		$token = $this->generateHashDebugValidHash("secretkey");
-		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true&queueittoken=". $this->generateHashDebugValidHash("secretkey"), 
-						$token , $integrationConfigString, "customerid", "secretkey");
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "http://test.com?event1=true&queueittoken=" . $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $token,
+            $integrationConfigString,
+            "customerid",
+            "secretkey"
+        );
 
-		$expectedCookie= 
-		"MatchedConfig=NULL".
-		"|ConfigVersion=3".
-		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|PureUrl=http://test.com?event1=true&queueittoken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|OriginalUrl=OriginalURL".
-		"|ServerUtcTime=".$timestamp.
-		"|RequestIP=".
-		"|RequestHttpHeader_Via=".
-		"|RequestHttpHeader_Forwarded=".
-		"|RequestHttpHeader_XForwardedFor=".
-		"|RequestHttpHeader_XForwardedHost=".
-		"|RequestHttpHeader_XForwardedProto=";
+        $expectedCookie =
 
-		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==$expectedCookie );
-	}
+            "MatchedConfig=NULL" .
+            "|ConfigVersion=3" .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|PureUrl=http://test.com?event1=true&queueittoken=" . $token .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=" .
+            "|RequestHttpHeader_Via=" .
+            "|RequestHttpHeader_Forwarded=" .
+            "|RequestHttpHeader_XForwardedFor=" .
+            "|RequestHttpHeader_XForwardedHost=" .
+            "|RequestHttpHeader_XForwardedProto=";
 
-	function test_validateRequestByIntegrationConfig_notvalidhash_debug() 
-	{
-		$userInQueueservice = new UserInQueueServiceMock();
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
+
+    function test_validateRequestByIntegrationConfig_notvalidhash_debug()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
-		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
-		$httpRequestProvider->absoluteUri="OriginalURL";
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
-		$r->setAccessible(true);
-		$r->setValue(null, $httpRequestProvider);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
 
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
-		$r->setAccessible(true);
-		$r->setValue(null, NULL);
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
 
-		$userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
-	$integrationConfigString = <<<EOT
+        $integrationConfigString = <<<EOT
 		{
 			"Description": "test",
 			"Integrations": [
@@ -1525,120 +1617,633 @@ EOT;
 			"ConfigDataVersion": "1.0.0.1"
 	    }
 EOT;
-		$token = $this->generateHashDebugValidHash("secretkey");
-		$result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true&queueittoken=". $this->generateHashDebugValidHash("secretkey"), 
-						$token."ss" , $integrationConfigString, "customerid", "secretkey");
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "http://test.com?event1=true&queueittoken=" . $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $token . "ss",
+            $integrationConfigString,
+            "customerid",
+            "secretkey"
+        );
 
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == Null);
+    }
 
-		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie ==Null );
-	}
-
-	function test_resolveQueueRequestByLocalConfig_debug() {
+    function test_validateRequestByIntegrationConfig_debug_invalid_config()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
         $userInQueueservice = new UserInQueueServiceMock();
-        $userInQueueservice->validateQueueRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
-		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->userHostAddress ="userIP";
-		$httpRequestProvider->headerArray = array(
-			"via" => "v", 
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-			"x-forwarded-host" => "xfh", 
-			"x-forwarded-proto" => "xfp");
-		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
-		$httpRequestProvider->absoluteUri="OriginalURL";
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
-		$r->setAccessible(true);
-		$r->setValue(null, $httpRequestProvider);
-
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
-		$r->setAccessible(true);
-		$r->setValue(null, NULL);
-
-		$eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
-		$eventconfig->cookieDomain = "cookieDomain";
-		$eventconfig->layoutName = "layoutName";
-		$eventconfig->culture = "culture";
-		$eventconfig->eventId = "eventId";
-		$eventconfig->queueDomain = "queueDomain";
-		$eventconfig->extendCookieValidity = true;
-		$eventconfig->cookieValidityMinute = 10;
-		$eventconfig->version = 12;
-
-		$token = $this->generateHashDebugValidHash("secretkey");
-		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
-		QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", $token, $eventconfig, "customerid", "secretkey");
-
-		$expectedCookie= 
-		"TargetUrl=targeturl".
-		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|QueueConfig=EventId:eventId&Version:12&QueueDomain:queueDomain&CookieDomain:cookieDomain&ExtendCookieValidity:1&CookieValidityMinute:10&LayoutName:layoutName&Culture:culture".
-		"|OriginalUrl=OriginalURL".
-		"|ServerUtcTime=".$timestamp.
-		"|RequestIP=userIP".
-		"|RequestHttpHeader_Via=v".
-		"|RequestHttpHeader_Forwarded=f".
-		"|RequestHttpHeader_XForwardedFor=xff".
-		"|RequestHttpHeader_XForwardedHost=xfh".
-		"|RequestHttpHeader_XForwardedProto=xfp";
-		
-		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie );
-	}
-
-	function test_cancelRequestByLocalConfig_debug() {
-		$userInQueueservice = new UserInQueueServiceMock();
         $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
-        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null);
-		$r->setAccessible(true);
-		$r->setValue(null, $userInQueueservice);
-		$httpRequestProvider = new HttpRequestProviderMock();
-		$httpRequestProvider->userHostAddress ="userIP";
-		$httpRequestProvider->headerArray = array(
-			"via" => "v", 
-			"forwarded" => "f", 
-			"x-forwarded-for" => "xff", 
-			"x-forwarded-host" => "xfh", 
-			"x-forwarded-proto" => "xfp");
-		$httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
-		$httpRequestProvider->absoluteUri="OriginalURL";
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
-		$r->setAccessible(true);
-		$r->setValue(null, $httpRequestProvider);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
 
-		$r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
-		$r->setAccessible(true);
-		$r->setValue(null, NULL);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
 
-		$cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
-		$cancelEventconfig->cookieDomain = "cookiedomain";
-		$cancelEventconfig->eventId = "eventid";
-		$cancelEventconfig->queueDomain = "queuedomain";
-		$cancelEventconfig->version = 1;
-		
-		$token = $this->generateHashDebugValidHash("secretkey");
-		$timestamp = gmdate("Y-m-d\TH:i:s\Z");
-		QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("targeturl", $token, $cancelEventconfig, "customerid", "secretkey");
-		
-		$expectedCookie= 
-		"TargetUrl=targeturl".
-		"|QueueitToken=e_eventId~rt_debug~h_0aa4b0e41d4cceae77d8fa63890a778f2b5c9cf962239f2862150517844bc0ce".
-		"|CancelConfig=EventId:eventid&Version:1&QueueDomain:queuedomain&CookieDomain:cookiedomain".
-		"|OriginalUrl=OriginalURL".
-		"|ServerUtcTime=".$timestamp.
-		"|RequestIP=userIP".
-		"|RequestHttpHeader_Via=v".
-		"|RequestHttpHeader_Forwarded=f".
-		"|RequestHttpHeader_XForwardedFor=xff".
-		"|RequestHttpHeader_XForwardedHost=xfh".
-		"|RequestHttpHeader_XForwardedProto=xfp";
-		
-		$this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie );
-	}
-	
-	public function generateHashDebugValidHash( $secretKey) {
-		$token = 'e_eventId' .   '~rt_debug';
-		return $token . '~h_' . hash_hmac('sha256', $token, $secretKey);
-	}
+        $integrationConfigString = "Invalid config";
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        $expectedCookie =
+            "Exception=integrationsConfigString is invalid." .
+            "|ConfigVersion=NULL" .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|PureUrl=http://test.com?event1=true&queueittoken=" . $token .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=userIP" .
+            "|RequestHttpHeader_Via=v" .
+            "|RequestHttpHeader_Forwarded=f" .
+            "|RequestHttpHeader_XForwardedFor=xff" .
+            "|RequestHttpHeader_XForwardedHost=xfh" .
+            "|RequestHttpHeader_XForwardedProto=xfp";
+
+        $exceptionThrown = false;
+        try {
+            $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+                "http://test.com?event1=true&queueittoken=" . $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+                $token,
+                $integrationConfigString,
+                "customerid",
+                "secretkey"
+            );
+        } catch (Exception $e) {
+            $exceptionThrown = $e->getMessage() == "integrationsConfigString is invalid.";
+        }
+
+        $this->assertTrue($exceptionThrown);
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
+
+    function test_validateRequestByIntegrationConfig_debug_null_config()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $userInQueueservice = new UserInQueueServiceMock();
+
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        $expectedCookie =
+            "Exception=integrationsConfigString can not be null or empty." .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|PureUrl=http://test.com?event1=true&queueittoken=" . $token .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=userIP" .
+            "|RequestHttpHeader_Via=v" .
+            "|RequestHttpHeader_Forwarded=f" .
+            "|RequestHttpHeader_XForwardedFor=xff" .
+            "|RequestHttpHeader_XForwardedHost=xfh" .
+            "|RequestHttpHeader_XForwardedProto=xfp";
+
+        $exceptionThrown = false;
+        try {
+            $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+                "http://test.com?event1=true&queueittoken=" . $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+                $token,
+                null,
+                "customerid",
+                "secretkey"
+            );
+        } catch (Exception $e) {
+            $exceptionThrown = $e->getMessage() == "integrationsConfigString can not be null or empty.";
+        }
+
+        $this->assertTrue($exceptionThrown);
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
+
+    function test_validateRequestByIntegrationConfig_debug_missing_customerId()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            null,
+            NULL,
+            "secretekey"
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_validateRequestByIntegrationConfig_debug_missing_secretKey()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            null,
+            "customerid",
+            NULL
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_validateRequestByIntegrationConfig_debug_expiredtoken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() - (3 * 60));
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            null,
+            "customerid",
+            "secretekey"
+        );
+
+        $this->assertTrue("https://customerid.api2.queue-it.net/customerid/diagnostics/connector/error/?code=timestamp", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_validateRequestByIntegrationConfig_debug_modifiedToken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp) . "modified",
+            null,
+            "customerid",
+            "secretekey"
+        );
+
+        $this->assertTrue("https://customerid.api2.queue-it.net/customerid/diagnostics/connector/error/?code=hash", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_validateRequestByIntegrationConfig_Exception_NoDebugToken_NoDebugCookie()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $userInQueueservice->validateCancelRequestResultRaiseException = true;
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
+
+        $var = "some text";
+        $integrationConfigString = <<<EOT
+			{
+				"Description": "test",
+				"Integrations": [
+				{
+					"Name": "event1action",
+					"EventId": "event1",
+					"CookieDomain": ".test.com",
+					"ActionType":"Cancel",
+					"Triggers": [
+					{
+						"TriggerParts": [
+						{
+							"Operator": "Contains",
+							"ValueToCompare": "event1",
+							"UrlPart": "PageUrl",
+							"ValidatorType": "UrlValidator",
+							"IsNegative": false,
+							"IsIgnoreCase": true
+						}
+						],  
+						"LogicalOperator": "And"
+					}
+					],
+					"QueueDomain": "knownusertest.queue-it.net"
+				}
+				],
+				"CustomerId": "knownusertest",
+				"AccountId": "knownusertest",
+				"Version": 3,
+				"PublishDate": "2017-05-15T21:39:12.0076806Z",
+				"ConfigDataVersion": "1.0.0.1"
+			}
+EOT;
+        try {
+            $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+                "http://test.com?event1=true&queueittoken=" ,
+                "queueittoken",
+                $integrationConfigString,
+                "customerid",
+                "secretkey"
+            );
+        } catch (Exception $ex) {
+        }
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == null);
+    }
+
+    function test_resolveQueueRequestByLocalConfig_debug()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
+        $userInQueueservice->validateQueueRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+        $eventconfig->cookieDomain = "cookieDomain";
+        $eventconfig->layoutName = "layoutName";
+        $eventconfig->culture = "culture";
+        $eventconfig->eventId = "eventId";
+        $eventconfig->queueDomain = "queueDomain";
+        $eventconfig->extendCookieValidity = true;
+        $eventconfig->cookieValidityMinute = 10;
+        $eventconfig->version = 12;
+        $eventconfig->actionName = "event1action";
+
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", $token, $eventconfig, "customerid", "secretkey");
+
+        $expectedCookie =
+            "TargetUrl=targeturl" .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|QueueConfig=EventId:eventId&Version:12&ActionName:event1action&QueueDomain:queueDomain&CookieDomain:cookieDomain&ExtendCookieValidity:1&CookieValidityMinute:10&LayoutName:layoutName&Culture:culture" .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=userIP" .
+            "|RequestHttpHeader_Via=v" .
+            "|RequestHttpHeader_Forwarded=f" .
+            "|RequestHttpHeader_XForwardedFor=xff" .
+            "|RequestHttpHeader_XForwardedHost=xfh" .
+            "|RequestHttpHeader_XForwardedProto=xfp";
+
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
+
+    function test_resolveQueueRequestByLocalConfig_debug_missing_customerId()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $eventconfig,
+            NULL,
+            "secretekey"
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_resolveQueueRequestByLocalConfig_debug_missing_secretKey()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $eventconfig,
+            "customerid",
+            NULL
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_resolveQueueRequestByLocalConfig_debug_expiredtoken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() - (3 * 60));
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            null,
+            "customerid",
+            "secretekey"
+        );
+
+        $this->assertTrue("https://customerid.api2.queue-it.net/customerid/diagnostics/connector/error/?code=timestamp", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_resolveQueueRequestByLocalConfig_debug_modifiedToken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp) . "modified",
+            $eventconfig,
+            "customerid",
+            "secretekey"
+        );
+
+        $this->assertTrue("https://customerid.api2.queue-it.net/customerid/diagnostics/connector/error/?code=hash", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_resolveQueueRequestByLocalConfig__Exception_NoDebugToken_NoDebugCookie()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
+        $userInQueueservice->validateQueueRequestRaiseException = true;
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+
+        $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
+        $eventconfig->cookieDomain = "cookieDomain";
+        $eventconfig->layoutName = "layoutName";
+        $eventconfig->culture = "culture";
+        $eventconfig->eventId = "eventId";
+        $eventconfig->queueDomain = "queueDomain";
+        $eventconfig->extendCookieValidity = true;
+        $eventconfig->cookieValidityMinute = 10;
+        $eventconfig->version = 12;
+        $eventconfig->actionName = "event1action";
+
+        try {
+            QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig("targeturl", "queueittoken", $eventconfig, "customerid", "secretkey");
+        } catch (Exception $ex) {
+        }
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == null);
+    }
+    //no need for test_resolveQueueRequestByLocalConfig_debug_nullconfig() since you cannot send null to resolveQueueRequestByLocalConfig
+
+    function test_cancelRequestByLocalConfig_debug()
+    {
+        $userInQueueservice = new UserInQueueServiceMock();
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Debug", "eventid", "queueid", "http://q.qeuue-it.com", null, null);
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->userHostAddress = "userIP";
+        $httpRequestProvider->headerArray = array(
+            "via" => "v",
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-host" => "xfh",
+            "x-forwarded-proto" => "xfp"
+        );
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->absoluteUri = "OriginalURL";
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $cancelEventconfig->cookieDomain = "cookiedomain";
+        $cancelEventconfig->eventId = "eventid";
+        $cancelEventconfig->queueDomain = "queuedomain";
+        $cancelEventconfig->version = 1;
+        $cancelEventconfig->actionName = "cancelAction";
+
+        $hashTimestamp = strval(time() + (3 * 60));
+        $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
+        $timestamp = gmdate("Y-m-d\TH:i:s\Z");
+        QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("targeturl", $token, $cancelEventconfig, "customerid", "secretkey");
+
+        $expectedCookie =
+            "TargetUrl=targeturl" .
+            "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
+            "|RunTime=" . phpversion() .
+            "|QueueitToken=" . $token .
+            "|CancelConfig=EventId:eventid&Version:1&ActionName:cancelAction&QueueDomain:queuedomain&CookieDomain:cookiedomain" .
+            "|OriginalUrl=OriginalURL" .
+            "|ServerUtcTime=" . $timestamp .
+            "|RequestIP=userIP" .
+            "|RequestHttpHeader_Via=v" .
+            "|RequestHttpHeader_Forwarded=f" .
+            "|RequestHttpHeader_XForwardedFor=xff" .
+            "|RequestHttpHeader_XForwardedHost=xfh" .
+            "|RequestHttpHeader_XForwardedProto=xfp";
+
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == $expectedCookie);
+    }
+
+    function  test_cancelRequestByLocalConfig_debug_missing_customerId()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $cancelEventconfig,
+            NULL,
+            "secretkey"
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_cancelRequestByLocalConfig_debug_missing_secretKey()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() + (3 * 60));
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $cancelEventconfig,
+            "customerid",
+            NULL
+        );
+
+        $this->assertTrue("https://api2.queue-it.net/diagnostics/connector/error/?code=setup", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_cancelRequestByLocalConfig_debug_expiredToken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() - (3 * 60));
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("secretkey", $hashTimestamp),
+            $cancelEventconfig,
+            "customerId",
+            "secretkey"
+        );
+
+        $this->assertTrue("https://customerId.api2.queue-it.net/customerId/diagnostics/connector/error/?code=timestamp", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_cancelRequestByLocalConfig_debug_modifiedToken()
+    {
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'debugInfoArray');
+        $r->setAccessible(true);
+        $r->setValue(null, NULL);
+        $hashTimestamp = strval(time() - (3 * 60));
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig(
+            "url",
+            $this->generateHashDebugValidHash("wrong", $hashTimestamp),
+            $cancelEventconfig,
+            "customerId",
+            "secretkey"
+        );
+
+        $this->assertTrue("https://customerId.api2.queue-it.net/customerId/diagnostics/connector/error/?code=hash", $result->redirectUrl);
+        $this->assertTrue($r->getValue() == NULL);
+    }
+
+    function test_cancelRequestByLocalConfig_Exception_NoDebugToken_NoDebugCookie()
+    {
+        $httpRequestProvider = new HttpRequestProviderMock();
+        $httpRequestProvider->cookieManager = new KnownUserCookieManagerMock();
+        $httpRequestProvider->headerArray = array(
+            "forwarded" => "f",
+            "x-forwarded-for" => "xff",
+            "x-forwarded-proto" => "xfp"
+        );
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'httpRequestProvider');
+        $r->setAccessible(true);
+        $r->setValue(null, $httpRequestProvider);
+
+        $userInQueueservice = new UserInQueueServiceMock();
+        $userInQueueservice->validateCancelRequestRaiseException = true;
+        $r = new ReflectionProperty('QueueIT\KnownUserV3\SDK\KnownUser', 'userInQueueService');
+        $r->setAccessible(true);
+        $r->setValue(null, $userInQueueservice);
+
+        $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
+        $cancelEventconfig->cookieDomain = "cookiedomain";
+        $cancelEventconfig->eventId = "eventid";
+        $cancelEventconfig->queueDomain = "queuedomain";
+        $cancelEventconfig->version = 1;
+        try {
+            $result = QueueIT\KnownUserV3\SDK\KnownUser::cancelRequestByLocalConfig("url", "queueittoken", $cancelEventconfig, "customerid", "secretkey");
+        } catch (Exception $ex) {
+        }
+        $this->assertTrue($httpRequestProvider->cookieManager->debugInfoCookie == null);
+    }
+    //no need for test_cancelRequestByLocalConfig_debug_nullconfig() since you cannot send null to cancelRequestByLocalConfig
+
+    public function generateHashDebugValidHash($secretKey, $timestamp)
+    {
+        $token = 'e_eventId' .   '~rt_debug' . '~ts_' . $timestamp;
+        return $token . '~h_' . hash_hmac('sha256', $token, $secretKey);
+    }
 }
