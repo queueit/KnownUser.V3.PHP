@@ -152,38 +152,45 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
     }
 
     public function getState($eventId, $cookieValidityMinutes, $secretKey, $validateTime) {
-        $cookieKey = self::getCookieKey($eventId);
-        if ($this->cookieManager->getCookie($cookieKey) === null) {
-            return new StateInfo(false, null, null, null);
-        }
-        $cookieNameValueMap = $this->getCookieNameValueMap($this->cookieManager->getCookie($cookieKey));
+        try{
+            $cookieKey = self::getCookieKey($eventId);
+            if ($this->cookieManager->getCookie($cookieKey) === null) {
+                return new StateInfo(false, false, null, null, null);
+            }
+            $cookieNameValueMap = $this->getCookieNameValueMap($this->cookieManager->getCookie($cookieKey));
 
-        if (!$this->isCookieValid($secretKey, $cookieNameValueMap, $eventId, $cookieValidityMinutes, $validateTime)) {
-            return new StateInfo(false, null, null, null);
-        }
+            if (!$this->isCookieValid($secretKey, $cookieNameValueMap, $eventId, $cookieValidityMinutes, $validateTime)) {
+                return new StateInfo(true, false, null, null, null);
+            }
 
-		$fixedCookieValidityMinutes = null;
-		if (array_key_exists("FixedValidityMins", $cookieNameValueMap)) {
-            $fixedCookieValidityMinutes = intval($cookieNameValueMap["FixedValidityMins"]);
-        }
+            $fixedCookieValidityMinutes = null;
+            if (array_key_exists("FixedValidityMins", $cookieNameValueMap)) {
+                $fixedCookieValidityMinutes = intval($cookieNameValueMap["FixedValidityMins"]);
+            }
 
-        return new StateInfo(
-            true, 
-            $cookieNameValueMap["QueueId"],
-			$fixedCookieValidityMinutes,
-            $cookieNameValueMap["RedirectType"]
-		);
+            return new StateInfo(
+                true,
+                true, 
+                $cookieNameValueMap["QueueId"],
+                $fixedCookieValidityMinutes,
+                $cookieNameValueMap["RedirectType"]
+            );
+        } catch(\Exception $e){
+            return new StateInfo(true, false, null, null, null);
+        }
     }
 }
 
 class StateInfo 
 {
+    public $isFound;
     public $isValid;
     public $queueId;
     public $fixedCookieValidityMinutes;
     public $redirectType;
 
-    public function __construct($isValid, $queueId, $fixedCookieValidityMinutes, $redirectType) {
+    public function __construct($isFound, $isValid, $queueId, $fixedCookieValidityMinutes, $redirectType) {
+        $this->isFound = $isFound;
         $this->isValid = $isValid;
         $this->queueId = $queueId;
         $this->fixedCookieValidityMinutes = $fixedCookieValidityMinutes;

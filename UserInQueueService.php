@@ -39,7 +39,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        return "v3-php-" . "3.6.0";
+        return "v3-php-" . "3.6.1";
     }
 
     private $userInQueueStateRepository;
@@ -80,36 +80,38 @@ class UserInQueueService implements IUserInQueueService
 
             return $result;
         }
+        
+        $queueParams = QueueUrlParams::extractQueueParams($queueitToken);
 
-        if (!Utils::isNullOrEmptyString($queueitToken)) {
-            $queueParams = QueueUrlParams::extractQueueParams($queueitToken);
-            return $this->getQueueITTokenValidationResult($customerId, $targetUrl, $secretKey, $config, $queueParams);
+        $requestValidationResult = null;
+        $isTokenValid = false;
+
+        if ($queueParams != null) {
+            $tokenValidationResult = $this->validateToken($config, $queueParams, $secretKey);
+            $isTokenValid = $tokenValidationResult->isValid;
+
+            if ($isTokenValid) {
+                $requestValidationResult = $this->getValidTokenResult($config, $queueParams, $secretKey);
+            } else {
+                $requestValidationResult = $this->getErrorResult($customerId, $targetUrl, $config, $queueParams, $tokenValidationResult->errorCode);
+            }
         } else {
-            return $this->cancelQueueCookieReturnQueueResult($customerId, $targetUrl, $config);
+            $requestValidationResult = $this->getQueueResult($targetUrl, $config, $customerId);
         }
+        
+        if ($state->isFound && !$isTokenValid)
+        {
+            $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
+        }
+        
+        return $requestValidationResult;
     }
 
-    private function getQueueITTokenValidationResult(
-        $customerId,
-        $targetUrl,
-        $secretKey,
+    private function getValidTokenResult(
         QueueEventConfig $config,
-        QueueUrlParams $queueParams
+        QueueUrlParams $queueParams,
+        $secretKey
     ) {
-        $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
-
-        if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
-            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "hash");
-        }
-
-        if (strtoupper($queueParams->eventId) != strtoupper($config->eventId)) {
-            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "eventid");
-        }
-
-        if ($queueParams->timeStamp < time()) {
-            return $this->cancelQueueCookieReturnErrorResult($customerId, $targetUrl, $config, $queueParams, "timestamp");
-        }
-
         $this->userInQueueStateRepository->store(
             $config->eventId,
             $queueParams->queueId,
@@ -131,15 +133,13 @@ class UserInQueueService implements IUserInQueueService
         return $result;
     }
 
-    private function cancelQueueCookieReturnErrorResult(
+    private function getErrorResult(
         $customerId,
         $targetUrl,
         QueueEventConfig $config,
         QueueUrlParams $qParams,
         $errorCode
     ) {
-        $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
-
         $query = $this->getQueryString($customerId, $config->eventId, $config->version, $config->culture, $config->layoutName, $config->actionName)
             . "&queueittoken=" . $qParams->queueITToken
             . "&ts=" . time()
@@ -161,13 +161,11 @@ class UserInQueueService implements IUserInQueueService
         return $result;
     }
 
-    private function cancelQueueCookieReturnQueueResult(
-        $customerId,
+    private function getQueueResult(
         $targetUrl,
-        QueueEventConfig $config
+        QueueEventConfig $config,
+        $customerId
     ) {
-        $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
-
         $query = $this->getQueryString($customerId, $config->eventId, $config->version, $config->culture, $config->layoutName, $config->actionName) .
             (!Utils::isNullOrEmptyString($targetUrl) ? "&t=" . rawurlencode($targetUrl) : "");
 
@@ -274,5 +272,38 @@ class UserInQueueService implements IUserInQueueService
             null,
             $actionName
         );
+    }
+
+    private function validateToken(
+        QueueEventConfig $config,
+        QueueUrlParams $queueParams,
+        $secretKey
+    ) {
+        $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
+
+        if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
+            return new TokenValidationResult(false, "hash");
+        }
+
+        if (strtoupper($queueParams->eventId) != strtoupper($config->eventId)) {
+            return new TokenValidationResult(false, "eventid");
+        }
+
+        if ($queueParams->timeStamp < time()) {
+            return new TokenValidationResult(false, "timestamp");
+        }
+
+        return new TokenValidationResult(true, null);
+    }
+}
+
+class TokenValidationResult 
+{
+    public $isValid;
+    public $errorCode;
+
+    public function __construct($isValid, $errorCode) {
+        $this->isValid = $isValid;
+        $this->errorCode = $errorCode;
     }
 }

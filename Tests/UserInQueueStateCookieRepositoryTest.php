@@ -278,7 +278,8 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$state = $testObject->getState($eventId, 10, $secretKey, true);
 
         $this->assertTrue($state->isStateExtendable());
-		$this->assertTrue($state->isValid);
+        $this->assertTrue($state->isValid);
+        $this->assertTrue($state->isFound);
         $this->assertTrue($state->queueId == $queueId);
 		$this->assertTrue($state->redirectType == "queue");
 	}
@@ -298,7 +299,8 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&RedirectType=queue&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
 		$state = $testObject->getState($eventId, 10, $secretKey, true);
 
-		$this->assertFalse($state->isValid);
+        $this->assertFalse($state->isValid);
+        $this->assertTrue($state->isFound);
 	}
 	
 	public function test_getState_oldCookie_invalid_expiredCookie_nonExtendable() {
@@ -316,7 +318,8 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$cookieManager->setCookie($cookieKey, "EventId=".$eventId."&QueueId=".$queueId."&FixedValidityMins=3&RedirectType=idle&IssueTime=".$issueTime."&Hash=".$hash, time() + (24*60*60), $cookieDomain);
 		$state = $testObject->getState($eventId, 10, $secretKey, true);
 
-		$this->assertFalse($state->isValid);
+        $this->assertFalse($state->isValid);
+        $this->assertTrue($state->isFound);
 	}
 
 	public function test_getState_validCookieFormat_nonExtendable() {
@@ -335,8 +338,22 @@ class UserInQueueStateCookieRepositoryTest extends UnitTestCase
 		$state = $testObject->getState($eventId, 10, $secretKey, true);
 
 		$this->assertFalse($state->isStateExtendable());
-		$this->assertTrue($state->isValid);
+        $this->assertTrue($state->isValid);
+        $this->assertTrue($state->isFound);
         $this->assertTrue($state->queueId == $queueId);
 		$this->assertTrue($state->redirectType == "idle");
-	}
+    }
+    
+    public function test_getState_NoCookie() {
+        $cookieManager = new UserInQueueStateCookieManagerMock();
+        $testObject = new QueueIT\KnownUserV3\SDK\UserInQueueStateCookieRepository($cookieManager);
+
+        $eventId = "event1";
+        $secretKey = "4e1deweb821-a82ew5-49da-acdqq0-5d3476f2068db";
+        
+        $state = $testObject->getState($eventId, 10, $secretKey, true);
+
+        $this->assertFalse($state->isFound);
+        $this->assertFalse($state->isValid);
+    }
 }
