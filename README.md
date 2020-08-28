@@ -95,7 +95,7 @@ try
 		
         die();
     }
-    if(!empty($queueittoken) && !empty($result->actionType))
+    if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
 	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
@@ -203,7 +203,7 @@ try
         
         die();
     }
-    if(!empty($queueittoken))
+    if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
 	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
