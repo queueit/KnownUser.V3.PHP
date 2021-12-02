@@ -138,6 +138,7 @@ try
         {
             header('HTTP/1.0: 200');
             header($result->getAjaxQueueRedirectHeaderKey() . ': '. $result->getAjaxRedirectUrl());            
+            header("Access-Control-Expose-Headers" . ': ' . $result->getAjaxQueueRedirectHeaderKey());            
         }
         
         die();
