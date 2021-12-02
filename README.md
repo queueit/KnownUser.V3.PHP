@@ -47,7 +47,8 @@ try
         else
         {
             header('HTTP/1.0: 200');
-            header($result->getAjaxQueueRedirectHeaderKey() . ': '. $result->getAjaxRedirectUrl());            
+            header($result->getAjaxQueueRedirectHeaderKey() . ': ' . $result->getAjaxRedirectUrl());            
+            header("Access-Control-Expose-Headers" . ': ' . $result->getAjaxQueueRedirectHeaderKey());            
         }
 		
         die();
@@ -154,4 +155,37 @@ catch(\Exception $e)
     // Use your own logging framework to log the error
     // This was a configuration error, so we let the user continue
 }
+```
+## Request body trigger (advanced)
+
+The connector supports triggering on request body content. An example could be a POST call with specific item ID where you want end-users to queue up for.
+For this to work, you will need to contact Queue-it support or enable request body triggers in your integration settings in your GO Queue-it platform account.
+Once enabled you will need to update your integration so request body is available for the connector.  
+You need to create a new context provider similar to this one:
+
+```php
+
+class HttpRequestBodyProvider extends QueueIT\KnownUserV3\SDK\HttpRequestProvider
+{
+    function getRequestBodyAsString()
+    {
+        $requestBody = file_get_contents('php://input');
+
+        if(isset($requestBody)){
+            return $requestBody;
+        }
+        else{
+            return '';            
+        }
+    }
+}
+
+```
+
+And then use it instead of default `HttpRequestProvider`
+
+```php
+// Default implementation of HttpRequestProvider always returns empty string as request body. 
+// Use following line to set a custom httpRequestBodyProvider
+QueueIT\KnownUserV3\SDK\KnownUser::setHttpRequestProvider(new HttpRequestBodyProvider());
 ```

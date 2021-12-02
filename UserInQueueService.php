@@ -27,6 +27,8 @@ interface IUserInQueueService
         $eventId,
         $cookieValidityMinutes,
         $cookieDomain,
+        $isCookieHttpOnly,
+        $isCookieSecure,
         $secretKey
     );
 
@@ -39,7 +41,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        return "v3-php-" . "3.6.1";
+        return "v3-php-" . "3.7.0";
     }
 
     private $userInQueueStateRepository;
@@ -65,6 +67,8 @@ class UserInQueueService implements IUserInQueueService
                     $state->queueId,
                     null,
                     !Utils::isNullOrEmptyString($config->cookieDomain) ? $config->cookieDomain : '',
+                    $config->isCookieHttpOnly,
+                    $config->isCookieSecure,
                     $state->redirectType,
                     $secretKey
                 );
@@ -101,7 +105,11 @@ class UserInQueueService implements IUserInQueueService
         
         if ($state->isFound && !$isTokenValid)
         {
-            $this->userInQueueStateRepository->cancelQueueCookie($config->eventId, $config->cookieDomain);
+            $this->userInQueueStateRepository->cancelQueueCookie(
+                $config->eventId,
+                $config->cookieDomain,
+                $config->isCookieHttpOnly,
+                $config->isCookieSecure);
         }
         
         return $requestValidationResult;
@@ -117,6 +125,8 @@ class UserInQueueService implements IUserInQueueService
             $queueParams->queueId,
             $queueParams->cookieValidityMinutes,
             !Utils::isNullOrEmptyString($config->cookieDomain) ? $config->cookieDomain : '',
+            $config->isCookieHttpOnly,
+            $config->isCookieSecure,
             $queueParams->redirectType,
             $secretKey
         );
@@ -221,9 +231,11 @@ class UserInQueueService implements IUserInQueueService
         $eventId,
         $cookieValidityMinutes,
         $cookieDomain,
+        $isCookieHttpOnly,
+        $isCookieSecure,
         $secretKey
     ) {
-        $this->userInQueueStateRepository->reissueQueueCookie($eventId, $cookieValidityMinutes, $cookieDomain, $secretKey);
+        $this->userInQueueStateRepository->reissueQueueCookie($eventId, $cookieValidityMinutes, $cookieDomain, $isCookieHttpOnly, $isCookieSecure, $secretKey);
     }
 
     public function validateCancelRequest($targetUrl, CancelEventConfig $cancelConfig, $customerId, $secretKey)
@@ -232,13 +244,19 @@ class UserInQueueService implements IUserInQueueService
         $state = $this->userInQueueStateRepository->getState($cancelConfig->eventId, -1, $secretKey, false);
 
         if ($state->isValid) {
-            $this->userInQueueStateRepository->cancelQueueCookie($cancelConfig->eventId, $cancelConfig->cookieDomain);
+            $this->userInQueueStateRepository->cancelQueueCookie(
+                $cancelConfig->eventId,
+                $cancelConfig->cookieDomain,
+                $cancelConfig->isCookieHttpOnly,
+                $cancelConfig->isCookieSecure);
 
             $query = $this->getQueryString($customerId, $cancelConfig->eventId, $cancelConfig->version, null, null, $cancelConfig->actionName)
                 . (!Utils::isNullOrEmptyString($targetUrl) ? ("&r=" . rawurlencode($targetUrl)) : "");
 
-
-            $uriPath = "cancel/" . $customerId . "/" . $cancelConfig->eventId . "/";
+            $uriPath = "cancel/" . $customerId . "/" . $cancelConfig->eventId;
+            if(!Utils::isNullOrEmptyString($state->queueId)) {
+                $uriPath = $uriPath . "/" . $state->queueId;
+            }
 
             $redirectUrl = $this->generateRedirectUrl($cancelConfig->queueDomain, $uriPath, $query);
 

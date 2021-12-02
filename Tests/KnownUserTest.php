@@ -19,7 +19,7 @@ class KnownUserCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICookieManag
         return $this->debugInfoCookie;
     }
 
-    public function setCookie($name, $value, $expire, $domain)
+    public function setCookie($name, $value, $expire, $domain, $isCookieHttpOnly, $isCookieSecure)
     {
         if ($domain == NULL) {
             $domain = "";
@@ -110,12 +110,16 @@ class UserInQueueServiceMock implements QueueIT\KnownUserV3\SDK\IUserInQueueServ
         $eventId,
         $cookieValidityMinute,
         $cookieDomain,
+        $isCookieHttpOnly,
+        $isCookieSecure,
         $secretKey
     ) {
         array_push($this->arrayFunctionCallsArgs['extendQueueCookie'], array(
             $eventId,
             $cookieValidityMinute,
             $cookieDomain,
+            $isCookieHttpOnly,
+            $isCookieSecure,
             $secretKey
         ));
     }
@@ -348,7 +352,7 @@ class KnownUserTest extends UnitTestCase
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie(NULL, 10, "cookieDomain", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie(NULL, 10, "cookieDomain", false, false, "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "eventId can not be null or empty.";
         }
@@ -367,7 +371,7 @@ class KnownUserTest extends UnitTestCase
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", 10, "cookieDomain", NULL);
+            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", 10, "cookieDomain", false, false, NULL);
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "secretKey can not be null or empty.";
         }
@@ -380,7 +384,7 @@ class KnownUserTest extends UnitTestCase
 
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", "invalidInt", "cookieDomain", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", "invalidInt", "cookieDomain", false, false, "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "cookieValidityMinute should be integer greater than 0.";
         }
@@ -392,7 +396,7 @@ class KnownUserTest extends UnitTestCase
         $this->setHttpHeaderRequestProvider();
         $exceptionThrown = false;
         try {
-            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", -1, "cookieDomain", "secretkey");
+            QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("event1", -1, "cookieDomain", false, false, "secretkey");
         } catch (Exception $e) {
             $exceptionThrown = $e->getMessage() == "cookieValidityMinute should be integer greater than 0.";
         }
@@ -407,9 +411,9 @@ class KnownUserTest extends UnitTestCase
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
 
-        QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("eventid", 10, "cookieDomain", "secretkey");
+        QueueIT\KnownUserV3\SDK\KnownUser::extendQueueCookie("eventid", 10, "cookieDomain", true, true, "secretkey");
 
-        $this->assertTrue($userInQueueservice->expectCall('extendQueueCookie', 1, array("eventid", 10, "cookieDomain", "secretkey")));
+        $this->assertTrue($userInQueueservice->expectCall('extendQueueCookie', 1, array("eventid", 10, "cookieDomain", true, true, "secretkey")));
     }
 
     function test_resolveQueueRequestByLocalConfig_empty_eventId()
@@ -679,6 +683,8 @@ class KnownUserTest extends UnitTestCase
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -687,19 +693,19 @@ class KnownUserTest extends UnitTestCase
                     {
                       "TriggerParts": [
                         {
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
                         },
                         {
-							"Operator": "Contains",
-							"ValueToCompare": "googlebot",
-							"ValidatorType": "UserAgentValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": false
+                            "Operator": "Contains",
+                            "ValueToCompare": "googlebot",
+                            "ValidatorType": "UserAgentValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": false
                         }
                       ],
                       "LogicalOperator": "And"
@@ -764,6 +770,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -772,19 +780,19 @@ EOT;
                     {
                       "TriggerParts": [
                         {
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
                         },
                         {
-							"Operator": "Contains",
-							"ValueToCompare": "googlebot",
-							"ValidatorType": "UserAgentValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": false
+                            "Operator": "Contains",
+                            "ValueToCompare": "googlebot",
+                            "ValidatorType": "UserAgentValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": false
                         }
                       ],
                       "LogicalOperator": "And"
@@ -865,6 +873,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -929,6 +939,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -986,6 +998,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -1044,6 +1058,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -1108,6 +1124,8 @@ EOT;
                   "ActionType": "Queue",
                   "EventId": "event1",
                   "CookieDomain": ".test.com",
+                  "IsCookieHttpOnly": false,
+                  "IsCookieSecure": false,
                   "LayoutName": "Christmas Layout by Queue-it",
                   "Culture": "",
                   "ExtendCookieValidity": true,
@@ -1157,38 +1175,40 @@ EOT;
 
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Cancel",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": false,
+                    "IsCookieSecure": false,
+                    "ActionType":"Cancel",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
 
         $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
@@ -1223,38 +1243,40 @@ EOT;
 
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Cancel",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": false,
+                    "IsCookieSecure": false,
+                    "ActionType":"Cancel",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
 
         $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
@@ -1280,41 +1302,42 @@ EOT;
         $r->setAccessible(true);
         $r->setValue(null, $userInQueueservice);
 
-
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Ignore",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": null,
+                    "IsCookieSecure": null,
+                    "ActionType":"Ignore",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
 
         $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
@@ -1344,38 +1367,40 @@ EOT;
 
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Ignore",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": false,
+                    "IsCookieSecure": false,
+                    "ActionType":"Ignore",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
 
         $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig("http://test.com?event1=true", "queueIttoken", $integrationConfigString, "customerid", "secretkey");
@@ -1411,38 +1436,40 @@ EOT;
 
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Cancel",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],  
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": false,
+                    "IsCookieSecure": false,
+                    "ActionType": "Cancel",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
         $hashTimestamp = strval(time() + (3 * 60));
         $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
@@ -1460,7 +1487,13 @@ EOT;
             "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
             "|RunTime=" . phpversion() .
             "|QueueitToken=" . $token .
-            "|CancelConfig=EventId:event1&Version:3&ActionName:event1action&QueueDomain:knownusertest.queue-it.net&CookieDomain:.test.com" .
+            "|CancelConfig=EventId:event1" .
+                         "&Version:3" .
+                         "&QueueDomain:knownusertest.queue-it.net" .
+                         "&CookieDomain:.test.com" .
+                         "&IsCookieHttpOnly:false" .
+                         "&IsCookieSecure:false" .
+                         "&ActionName:event1action" .
             "|OriginalUrl=OriginalURL" .
             "|ServerUtcTime=" . $timestamp .
             "|RequestIP=userIP" .
@@ -1498,38 +1531,40 @@ EOT;
         $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
         $integrationConfigString = <<<EOT
-		{
-			"Description": "test",
-			"Integrations": [
-			{
-				"Name": "event1action",
-				"EventId": "event1",
-				"CookieDomain": ".test.com",
-				"ActionType":"Cancel",
-				"Triggers": [
-				{
-					"TriggerParts": [
-					{
-						"Operator": "Contains",
-						"ValueToCompare": "notmatch",
-						"UrlPart": "PageUrl",
-						"ValidatorType": "UrlValidator",
-						"IsNegative": false,
-						"IsIgnoreCase": true
-					}
-					],  
-					"LogicalOperator": "And"
-				}
-				],
-				"QueueDomain": "knownusertest.queue-it.net"
-			}
-			],
-			"CustomerId": "knownusertest",
-			"AccountId": "knownusertest",
-			"Version": 3,
-			"PublishDate": "2017-05-15T21:39:12.0076806Z",
-			"ConfigDataVersion": "1.0.0.1"
-		}
+        {
+            "Description": "test",
+            "Integrations": [
+            {
+                "Name": "event1action",
+                "EventId": "event1",
+                "CookieDomain": ".test.com",
+                "IsCookieHttpOnly": false,
+                "IsCookieSecure": false,
+                "ActionType":"Cancel",
+                "Triggers": [
+                {
+                    "TriggerParts": [
+                    {
+                        "Operator": "Contains",
+                        "ValueToCompare": "notmatch",
+                        "UrlPart": "PageUrl",
+                        "ValidatorType": "UrlValidator",
+                        "IsNegative": false,
+                        "IsIgnoreCase": true
+                    }
+                    ],
+                    "LogicalOperator": "And"
+                }
+                ],
+                "QueueDomain": "knownusertest.queue-it.net"
+            }
+            ],
+            "CustomerId": "knownusertest",
+            "AccountId": "knownusertest",
+            "Version": 3,
+            "PublishDate": "2017-05-15T21:39:12.0076806Z",
+            "ConfigDataVersion": "1.0.0.1"
+        }
 EOT;
         $hashTimestamp = strval(time() + (3 * 60));
         $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
@@ -1584,38 +1619,40 @@ EOT;
         $userInQueueservice->validateCancelRequestResult = new QueueIT\KnownUserV3\SDK\RequestValidationResult("Cancel", "eventid", "queueid", "redirectUrl", null, null);
 
         $integrationConfigString = <<<EOT
-		{
-			"Description": "test",
-			"Integrations": [
-			{
-				"Name": "event1action",
-				"EventId": "event1",
-				"CookieDomain": ".test.com",
-				"ActionType":"Cancel",
-				"Triggers": [
-				{
-					"TriggerParts": [
-					{
-						"Operator": "Contains",
-						"ValueToCompare": "notmatch",
-						"UrlPart": "PageUrl",
-						"ValidatorType": "UrlValidator",
-						"IsNegative": false,
-						"IsIgnoreCase": true
-					}
-					],  
-					"LogicalOperator": "And"
-				}
-				],
-				"QueueDomain": "knownusertest.queue-it.net"
-			}
-			],
-			"CustomerId": "knownusertest",
-			"AccountId": "knownusertest",
-			"Version": 3,
-			"PublishDate": "2017-05-15T21:39:12.0076806Z",
-			"ConfigDataVersion": "1.0.0.1"
-	    }
+        {
+            "Description": "test",
+            "Integrations": [
+            {
+                "Name": "event1action",
+                "EventId": "event1",
+                "CookieDomain": ".test.com",
+                "IsCookieHttpOnly": false,
+                "IsCookieSecure": false,
+                "ActionType":"Cancel",
+                "Triggers": [
+                {
+                    "TriggerParts": [
+                    {
+                        "Operator": "Contains",
+                        "ValueToCompare": "notmatch",
+                        "UrlPart": "PageUrl",
+                        "ValidatorType": "UrlValidator",
+                        "IsNegative": false,
+                        "IsIgnoreCase": true
+                    }
+                    ],
+                    "LogicalOperator": "And"
+                }
+                ],
+                "QueueDomain": "knownusertest.queue-it.net"
+            }
+            ],
+            "CustomerId": "knownusertest",
+            "AccountId": "knownusertest",
+            "Version": 3,
+            "PublishDate": "2017-05-15T21:39:12.0076806Z",
+            "ConfigDataVersion": "1.0.0.1"
+        }
 EOT;
         $hashTimestamp = strval(time() + (3 * 60));
         $token = $this->generateHashDebugValidHash("secretkey", $hashTimestamp);
@@ -1848,38 +1885,40 @@ EOT;
 
         $var = "some text";
         $integrationConfigString = <<<EOT
-			{
-				"Description": "test",
-				"Integrations": [
-				{
-					"Name": "event1action",
-					"EventId": "event1",
-					"CookieDomain": ".test.com",
-					"ActionType":"Cancel",
-					"Triggers": [
-					{
-						"TriggerParts": [
-						{
-							"Operator": "Contains",
-							"ValueToCompare": "event1",
-							"UrlPart": "PageUrl",
-							"ValidatorType": "UrlValidator",
-							"IsNegative": false,
-							"IsIgnoreCase": true
-						}
-						],  
-						"LogicalOperator": "And"
-					}
-					],
-					"QueueDomain": "knownusertest.queue-it.net"
-				}
-				],
-				"CustomerId": "knownusertest",
-				"AccountId": "knownusertest",
-				"Version": 3,
-				"PublishDate": "2017-05-15T21:39:12.0076806Z",
-				"ConfigDataVersion": "1.0.0.1"
-			}
+            {
+                "Description": "test",
+                "Integrations": [
+                {
+                    "Name": "event1action",
+                    "EventId": "event1",
+                    "CookieDomain": ".test.com",
+                    "IsCookieHttpOnly": false,
+                    "IsCookieSecure": false,
+                    "ActionType":"Cancel",
+                    "Triggers": [
+                    {
+                        "TriggerParts": [
+                        {
+                            "Operator": "Contains",
+                            "ValueToCompare": "event1",
+                            "UrlPart": "PageUrl",
+                            "ValidatorType": "UrlValidator",
+                            "IsNegative": false,
+                            "IsIgnoreCase": true
+                        }
+                        ],
+                        "LogicalOperator": "And"
+                    }
+                    ],
+                    "QueueDomain": "knownusertest.queue-it.net"
+                }
+                ],
+                "CustomerId": "knownusertest",
+                "AccountId": "knownusertest",
+                "Version": 3,
+                "PublishDate": "2017-05-15T21:39:12.0076806Z",
+                "ConfigDataVersion": "1.0.0.1"
+            }
 EOT;
         try {
             $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
@@ -1921,13 +1960,15 @@ EOT;
         $r->setValue(null, NULL);
 
         $eventconfig = new \QueueIT\KnownUserV3\SDK\QueueEventConfig();
-        $eventconfig->cookieDomain = "cookieDomain";
+        $eventconfig->eventId = "eventId";
         $eventconfig->layoutName = "layoutName";
         $eventconfig->culture = "culture";
-        $eventconfig->eventId = "eventId";
         $eventconfig->queueDomain = "queueDomain";
         $eventconfig->extendCookieValidity = true;
         $eventconfig->cookieValidityMinute = 10;
+        $eventconfig->cookieDomain = "cookieDomain";
+        $eventconfig->isCookieHttpOnly = false;
+        $eventconfig->isCookieSecure = false;
         $eventconfig->version = 12;
         $eventconfig->actionName = "event1action";
 
@@ -1941,7 +1982,17 @@ EOT;
             "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
             "|RunTime=" . phpversion() .
             "|QueueitToken=" . $token .
-            "|QueueConfig=EventId:eventId&Version:12&ActionName:event1action&QueueDomain:queueDomain&CookieDomain:cookieDomain&ExtendCookieValidity:1&CookieValidityMinute:10&LayoutName:layoutName&Culture:culture" .
+            "|QueueConfig=EventId:eventId" .
+                        "&Version:12" .
+                        "&ActionName:event1action" .
+                        "&QueueDomain:queueDomain" .
+                        "&CookieDomain:cookieDomain" .
+                        "&IsCookieHttpOnly:false" .
+                        "&IsCookieSecure:false" .
+                        "&ExtendCookieValidity:true" .
+                        "&CookieValidityMinute:10" .
+                        "&LayoutName:layoutName" .
+                        "&Culture:culture" .
             "|OriginalUrl=OriginalURL" .
             "|ServerUtcTime=" . $timestamp .
             "|RequestIP=userIP" .
@@ -2104,10 +2155,12 @@ EOT;
         $r->setValue(null, NULL);
 
         $cancelEventconfig = new \QueueIT\KnownUserV3\SDK\CancelEventConfig();
-        $cancelEventconfig->cookieDomain = "cookiedomain";
         $cancelEventconfig->eventId = "eventid";
         $cancelEventconfig->queueDomain = "queuedomain";
         $cancelEventconfig->version = 1;
+        $cancelEventconfig->cookieDomain = "cookiedomain";
+        $cancelEventconfig->isCookieHttpOnly = false;
+        $cancelEventconfig->isCookieSecure = false;
         $cancelEventconfig->actionName = "cancelAction";
 
         $hashTimestamp = strval(time() + (3 * 60));
@@ -2120,7 +2173,13 @@ EOT;
             "|SdkVersion=" . QueueIT\KnownUserV3\SDK\UserInQueueService::getSDKVersion() .
             "|RunTime=" . phpversion() .
             "|QueueitToken=" . $token .
-            "|CancelConfig=EventId:eventid&Version:1&ActionName:cancelAction&QueueDomain:queuedomain&CookieDomain:cookiedomain" .
+            "|CancelConfig=EventId:eventid" .
+                         "&Version:1" .
+                         "&QueueDomain:queuedomain" .
+                         "&CookieDomain:cookiedomain" .
+                         "&IsCookieHttpOnly:false" .
+                         "&IsCookieSecure:false" .
+                         "&ActionName:cancelAction" .
             "|OriginalUrl=OriginalURL" .
             "|ServerUtcTime=" . $timestamp .
             "|RequestIP=userIP" .

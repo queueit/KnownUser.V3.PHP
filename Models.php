@@ -11,6 +11,8 @@ class QueueEventConfig
     public $extendCookieValidity; 
     public $cookieValidityMinute;
     public $cookieDomain;
+    public $isCookieHttpOnly;
+    public $isCookieSecure;
     public $version;
     public $actionName;
 
@@ -23,8 +25,14 @@ class QueueEventConfig
         return "EventId:" . $this->eventId 
             . "&Version:" . $this->version
             . "&ActionName:" . $this->actionName
-            . "&QueueDomain:" . $this->queueDomain . "&CookieDomain:" . $this->cookieDomain . "&ExtendCookieValidity:" . $this->extendCookieValidity
-            . "&CookieValidityMinute:" . $this->cookieValidityMinute . "&LayoutName:" . $this->layoutName . "&Culture:" . $this->culture;
+            . "&QueueDomain:" . $this->queueDomain
+            . "&CookieDomain:" . $this->cookieDomain
+            . "&IsCookieHttpOnly:" . Utils::boolToString($this->isCookieHttpOnly)
+            . "&IsCookieSecure:" . Utils::boolToString($this->isCookieSecure)
+            . "&ExtendCookieValidity:" . Utils::boolToString($this->extendCookieValidity)
+            . "&CookieValidityMinute:" . $this->cookieValidityMinute
+            . "&LayoutName:" . $this->layoutName
+            . "&Culture:" . $this->culture;
     }
 }
 
@@ -33,6 +41,8 @@ class CancelEventConfig
     public $eventId;
     public $queueDomain;
     public $cookieDomain;
+    public $isCookieHttpOnly;
+    public $isCookieSecure;
     public $version;
     public $actionName;
 
@@ -44,8 +54,11 @@ class CancelEventConfig
     public function getString() {
         return "EventId:" . $this->eventId 
             . "&Version:" . $this->version
-            . "&ActionName:" . $this->actionName
-            . "&QueueDomain:" . $this->queueDomain . "&CookieDomain:" . $this->cookieDomain;
+            . "&QueueDomain:" . $this->queueDomain
+            . "&CookieDomain:" . $this->cookieDomain
+            . "&IsCookieHttpOnly:" . Utils::boolToString($this->isCookieHttpOnly)
+            . "&IsCookieSecure:" . Utils::boolToString($this->isCookieSecure)
+            . "&ActionName:" . $this->actionName;
     }
 }
 
@@ -55,7 +68,7 @@ class RequestValidationResult
     public $redirectUrl;
     public $queueId;
     public $actionType;
-	public $redirectType;
+    public $redirectType;
     public $actionName;
     public $isAjaxResult;
 
@@ -64,7 +77,7 @@ class RequestValidationResult
        $this->eventId = $eventId;
        $this->queueId = $queueId;
        $this->redirectUrl = $redirectUrl;
-	   $this->redirectType = $redirectType;
+       $this->redirectType = $redirectType;
        $this->actionName = $actionName;     
     }
 

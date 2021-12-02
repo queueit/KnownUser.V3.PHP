@@ -8,6 +8,15 @@ class Utils
     {
         return (!isset($value) || trim($value) === '');
     }
+
+    public static function boolToString($value)
+    {
+        if(is_null($value)) {
+            return "null";
+        }
+
+        return $value ? "true" : "false";
+    }
 }
 
 class QueueUrlParams

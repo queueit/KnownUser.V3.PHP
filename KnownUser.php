@@ -10,7 +10,7 @@ require_once('QueueITHelpers.php');
 
 class KnownUser
 {
-    const QueueITAjaxHeaderKey = "x-queueit-ajaxpageurl";
+    const QueueITAjaxHeaderKey = "x-queueit-ajaxpageurl";    
 
     //used for unittest
     private static $userInQueueService = null;
@@ -20,6 +20,10 @@ class KnownUser
             return new UserInQueueService(new UserInQueueStateCookieRepository(KnownUser::getHttpRequestProvider()->getCookieManager()));
         }
         return KnownUser::$userInQueueService;
+    }
+
+    public static function setHttpRequestProvider(IHttpRequestProvider $customHttpRequestProvider){
+        KnownUser::$httpRequestProvider = $customHttpRequestProvider;
     }
 
     //used for unittest
@@ -33,7 +37,7 @@ class KnownUser
     }
 
     private static $debugInfoArray = null;
-    public static function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey)
+    public static function extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $isCookieHttpOnly, $isCookieSecure, $secretKey)
     {
         if (empty($eventId)) {
             throw new KnownUserException("eventId can not be null or empty.");
@@ -45,7 +49,7 @@ class KnownUser
             throw new KnownUserException("cookieValidityMinute should be integer greater than 0.");
         }
         $userInQueueService = KnownUser::getUserInQueueService();
-        $userInQueueService->extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $secretKey);
+        $userInQueueService->extendQueueCookie($eventId, $cookieValidityMinute, $cookieDomain, $isCookieHttpOnly, $isCookieSecure, $secretKey);
     }
 
     private static function _cancelRequestByLocalConfig(
@@ -107,7 +111,7 @@ class KnownUser
         }
 
         try {
-            $result =  KnownUser::_cancelRequestByLocalConfig($targetUrl,$queueitToken,$cancelConfig,$customerId,$secretKey,$connectorDiagnostics->isEnabled);
+            $result =  KnownUser::_cancelRequestByLocalConfig($targetUrl, $queueitToken, $cancelConfig, $customerId, $secretKey, $connectorDiagnostics->isEnabled);
             KnownUser::sendDebugCookie();
             return $result;
         } catch (\Exception $e) {
@@ -217,14 +221,14 @@ class KnownUser
     public static function resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, QueueEventConfig $queueConfig, $customerId, $secretKey)
     {
         $connectorDiagnostics = ConnectorDiagnostics::verify($customerId, $secretKey, $queueitToken);
-        
+
         if ($connectorDiagnostics->hasError) {
             return $connectorDiagnostics->validationResult;
         }
 
         try {
             $targetUrl = KnownUser::generateTargetUrl($targetUrl);
-            $result =  KnownUser::_resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey,$connectorDiagnostics->isEnabled);
+            $result =  KnownUser::_resolveQueueRequestByLocalConfig($targetUrl, $queueitToken, $queueConfig, $customerId, $secretKey, $connectorDiagnostics->isEnabled);
             KnownUser::sendDebugCookie();
             return $result;
         } catch (\Exception $e) {
@@ -291,12 +295,14 @@ class KnownUser
         $eventConfig = new QueueEventConfig();
         $targetUrl = "";
         $eventConfig->eventId = $matchedConfig["EventId"];
-        $eventConfig->queueDomain = $matchedConfig["QueueDomain"];
         $eventConfig->layoutName = $matchedConfig["LayoutName"];
         $eventConfig->culture = $matchedConfig["Culture"];
-        $eventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $eventConfig->queueDomain = $matchedConfig["QueueDomain"];
         $eventConfig->extendCookieValidity = $matchedConfig["ExtendCookieValidity"];
         $eventConfig->cookieValidityMinute = $matchedConfig["CookieValidityMinute"];
+        $eventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $eventConfig->isCookieHttpOnly =  array_key_exists("IsCookieHttpOnly", $matchedConfig) ? $matchedConfig["IsCookieHttpOnly"] : false;
+        $eventConfig->isCookieSecure = array_key_exists("IsCookieSecure", $matchedConfig) ? $matchedConfig["IsCookieSecure"] : false;
         $eventConfig->version = $customerIntegration["Version"];
         $eventConfig->actionName = $matchedConfig["Name"];
 
@@ -325,10 +331,12 @@ class KnownUser
         $isDebug
     ) {
         $cancelEventConfig = new CancelEventConfig();
-        $cancelEventConfig->eventId = $matchedConfig["EventId"];
         $cancelEventConfig->queueDomain = $matchedConfig["QueueDomain"];
-        $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $cancelEventConfig->eventId = $matchedConfig["EventId"];
         $cancelEventConfig->version = $customerIntegration["Version"];
+        $cancelEventConfig->cookieDomain = $matchedConfig["CookieDomain"];
+        $cancelEventConfig->isCookieHttpOnly = array_key_exists("IsCookieHttpOnly", $matchedConfig) ? $matchedConfig["IsCookieHttpOnly"] : false;
+        $cancelEventConfig->isCookieSecure = array_key_exists("IsCookieSecure", $matchedConfig) ? $matchedConfig["IsCookieSecure"] : false;
         $cancelEventConfig->actionName = $matchedConfig["Name"];
 
         return KnownUser::_cancelRequestByLocalConfig($currentUrlWithoutQueueITToken, $queueitToken, $cancelEventConfig, $customerId, $secretKey, $isDebug);
@@ -374,7 +382,7 @@ class KnownUser
             foreach (KnownUser::$debugInfoArray as $key => $value) {
                 array_push($cookieNameValues, $key . '=' . $value);
             }
-            KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug", implode('|',  $cookieNameValues), 0, null);
+            KnownUser::getHttpRequestProvider()->getCookieManager()->setCookie("queueitdebug", implode('|',  $cookieNameValues), 0, null, false, false);
         }
     }
 
@@ -413,12 +421,12 @@ class CookieManager implements ICookieManager
         }
     }
 
-    public function setCookie($name, $value, $expire, $domain)
+    public function setCookie($name, $value, $expire, $domain, $isHttpOnly, $isSecure)
     {
         if ($domain == null) {
             $domain = "";
         }
-        setcookie($name, $value, $expire, "/", $domain, false, false);
+        setcookie($name, $value, $expire, "/", $domain, $isSecure, $isHttpOnly);
     }
 
     public function getCookieArray()
@@ -438,6 +446,7 @@ interface IHttpRequestProvider
     function getCookieManager();
     function getAbsoluteUri();
     function getHeaderArray();
+    function getRequestBodyAsString();
 }
 
 class HttpRequestProvider implements IHttpRequestProvider
@@ -488,6 +497,11 @@ class HttpRequestProvider implements IHttpRequestProvider
             $this->allHeadersLowerCaseKeyArray = $tempArray;
         }
         return $this->allHeadersLowerCaseKeyArray;
+    }
+
+    function getRequestBodyAsString()
+    {        
+        return '';
     }
 }
 

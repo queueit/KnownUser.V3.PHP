@@ -22,7 +22,7 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                     return false;
                 }
                 if ($this->evaluateTrigger($trigger, $currentPageUrl, $request)) {
-					return $integrationConfig;
+                    return $integrationConfig;
                 }
             }
         }
@@ -70,6 +70,8 @@ class IntegrationEvaluator implements IIntegrationEvaluator
                 return UserAgentValidatorHelper::evaluate($triggerPart, $request->getUserAgent());
             case "HttpHeaderValidator":
                 return HttpHeaderValidatorHelper::evaluate($triggerPart, $request->getHeaderArray());
+            case "RequestBodyValidator":
+                return RequestBodyValidatorHelper::evaluate($triggerPart, $request->getRequestBodyAsString());
             default:
                 return false;
         }
@@ -176,6 +178,26 @@ class HttpHeaderValidatorHelper
             $triggerPart["IsNegative"], 
             $triggerPart["IsIgnoreCase"], 
             $headerValue, 
+            array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
+            array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
+    }
+}
+
+class RequestBodyValidatorHelper 
+{
+    public static function evaluate(array $triggerPart, $requestBody) {           
+           
+        if (!array_key_exists("Operator", $triggerPart) ||
+            !array_key_exists("IsNegative", $triggerPart) ||
+            !array_key_exists("IsIgnoreCase", $triggerPart)) {
+            return false;
+        }
+
+        return ComparisonOperatorHelper::Evaluate(
+            $triggerPart["Operator"], 
+            $triggerPart["IsNegative"], 
+            $triggerPart["IsIgnoreCase"],
+            $requestBody, 
             array_key_exists("ValueToCompare",$triggerPart)? $triggerPart["ValueToCompare"]: null,
             array_key_exists("ValuesToCompare",$triggerPart)? $triggerPart["ValuesToCompare"]: null);
     }

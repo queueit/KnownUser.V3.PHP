@@ -1,0 +1,5 @@
+/nbproject/private/
+Tests/vendor
+Tests/composer.lock
+/simpletest
+/.vs

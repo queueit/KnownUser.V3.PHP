@@ -1,7 +1,6 @@
 <?php
 require_once( __DIR__ . '/vendor/simpletest/simpletest/autorun.php');
 
-
 class AllTests extends TestSuite {
     function AllTests() {
         
@@ -11,6 +10,6 @@ class AllTests extends TestSuite {
        $this->addFile('Tests/QueueUrlParamsTest.php');
        $this->addFile('Tests/UserInQueueServiceTest.php');
        $this->addFile('Tests/UserInQueueStateCookieRepositoryTest.php');
-	}
+    }
 }
 ?>
