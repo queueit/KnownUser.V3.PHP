@@ -426,6 +426,9 @@ class CookieManager implements ICookieManager
         if ($domain == null) {
             $domain = "";
         }
+        if ($value == null) {
+            $value = "";
+        }
         setcookie($name, $value, $expire, "/", $domain, $isSecure, $isHttpOnly);
     }
 
