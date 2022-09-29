@@ -724,8 +724,8 @@ class IntegrationConfigHelpersCookieManagerMock implements SDK\ICookieManager
     }
 
     public function setCookie($name, $value, $expire, $domain, $isCookieHttpOnly, $isCookieSecure) {
-        if ($domain == NULL) {
-            $domain = "";
+        if(is_null($value)){
+            $value = "";
         }
         $this->debugInfoCookie = $value;
     }
