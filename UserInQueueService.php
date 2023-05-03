@@ -221,7 +221,7 @@ class UserInQueueService implements IUserInQueueService
 
     private function generateRedirectUrl($queueDomain, $uriPath, $query)
     {
-        if (substr($queueDomain, -1) !== "/")
+    	if (substr($queueDomain ?? '', -1) !== "/")
             $queueDomain = $queueDomain . "/";
 
         return "https://" . $queueDomain . $uriPath . "?" . $query;

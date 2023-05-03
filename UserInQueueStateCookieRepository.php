@@ -57,11 +57,11 @@ class UserInQueueStateCookieRepository implements IUserInQueueStateRepository
 
     private function getCookieNameValueMap($cookieValue) {
         $result = array();
-        $cookieNameValues = explode("&", $cookieValue);
+	$cookieNameValues = explode("&", $cookieValue ?? '');
         $length = count($cookieNameValues);
 
         for ($i = 0; $i < $length; ++$i) {
-            $arr = explode("=", $cookieNameValues[$i]);
+    	    $arr = explode("=", $cookieNameValues[$i] ?? '');
             if (count($arr) == 2) {
                 $result[$arr[0]] = $arr[1];
             }
