@@ -6,7 +6,7 @@ class Utils
 {
     public static function isNullOrEmptyString($value)
     {
-        return (!isset($value) || trim($value) === '');
+        return (!isset($value) || !is_string($value) || trim($value) === '');
     }
 
     public static function boolToString($value)
@@ -16,6 +16,19 @@ class Utils
         }
 
         return $value ? "true" : "false";
+    }
+
+    public static function getParameterByName($url, $name)
+    {
+        $name = preg_quote($name, '/');
+        $pattern = '/[?&]' . $name . '(=([^&#]*)|&|#|$)/';
+        if (preg_match($pattern, $url, $matches)) {
+            if (!isset($matches[2])) return "";
+            $response = urldecode(str_replace('+', ' ', $matches[2]));
+            return $response;
+        }
+    
+        return null;
     }
 }
 
@@ -47,65 +60,72 @@ class QueueUrlParams
             return null;
         }
 
-        $result = new QueueUrlParams();
-        $result->queueITToken = $queueitToken;
-        $paramsNameValueList = explode(QueueUrlParams::KeyValueSeparatorGroupChar, $result->queueITToken);
+        try{
+            
+            $result = new QueueUrlParams();
+            $result->queueITToken = $queueitToken;
+            $paramsNameValueList = explode(QueueUrlParams::KeyValueSeparatorGroupChar, $result->queueITToken);
 
-        foreach ($paramsNameValueList as $pNameValue) {
-            $paramNameValueArr = explode(QueueUrlParams::KeyValueSeparatorChar, $pNameValue);
+            foreach ($paramsNameValueList as $pNameValue) {
+                $paramNameValueArr = explode(QueueUrlParams::KeyValueSeparatorChar, $pNameValue);
 
-            if (count($paramNameValueArr) != 2) {
-                continue;
+                if (count($paramNameValueArr) != 2) {
+                    continue;
+                }
+
+                switch ($paramNameValueArr[0]) {
+                    case QueueUrlParams::TimeStampKey: {
+                            if (is_numeric($paramNameValueArr[1])) {
+                                $result->timeStamp = intval($paramNameValueArr[1]);
+                            } else {
+                                $result->timeStamp = 0;
+                            }
+                            break;
+                        }
+                    case QueueUrlParams::CookieValidityMinutesKey: {
+                            if (is_numeric($paramNameValueArr[1])) {
+                                $result->cookieValidityMinutes = intval($paramNameValueArr[1]);
+                            }
+                            break;
+                        }
+                    case QueueUrlParams::EventIdKey: {
+                            $result->eventId = $paramNameValueArr[1];
+                            break;
+                        }
+                    case QueueUrlParams::ExtendableCookieKey: {
+                            $result->extendableCookie = $paramNameValueArr[1] === 'True' || $paramNameValueArr[1] === 'true';
+                            break;
+                        }
+                    case QueueUrlParams::HashKey: {
+                            $result->hashCode = $paramNameValueArr[1];
+                            break;
+                        }
+                    case QueueUrlParams::QueueIdKey: {
+                            $result->queueId = $paramNameValueArr[1];
+                            break;
+                        }
+                    case QueueUrlParams::RedirectTypeKey: {
+                            $result->redirectType = $paramNameValueArr[1];
+                            break;
+                        }
+                }
             }
 
-            switch ($paramNameValueArr[0]) {
-                case QueueUrlParams::TimeStampKey: {
-                        if (is_numeric($paramNameValueArr[1])) {
-                            $result->timeStamp = intval($paramNameValueArr[1]);
-                        } else {
-                            $result->timeStamp = 0;
-                        }
-                        break;
-                    }
-                case QueueUrlParams::CookieValidityMinutesKey: {
-                        if (is_numeric($paramNameValueArr[1])) {
-                            $result->cookieValidityMinutes = intval($paramNameValueArr[1]);
-                        }
-                        break;
-                    }
-                case QueueUrlParams::EventIdKey: {
-                        $result->eventId = $paramNameValueArr[1];
-                        break;
-                    }
-                case QueueUrlParams::ExtendableCookieKey: {
-                        $result->extendableCookie = $paramNameValueArr[1] === 'True' || $paramNameValueArr[1] === 'true';
-                        break;
-                    }
-                case QueueUrlParams::HashKey: {
-                        $result->hashCode = $paramNameValueArr[1];
-                        break;
-                    }
-                case QueueUrlParams::QueueIdKey: {
-                        $result->queueId = $paramNameValueArr[1];
-                        break;
-                    }
-                case QueueUrlParams::RedirectTypeKey: {
-                        $result->redirectType = $paramNameValueArr[1];
-                        break;
-                    }
-            }
+            $result->queueITTokenWithoutHash = str_replace(
+                QueueUrlParams::KeyValueSeparatorGroupChar
+                    . QueueUrlParams::HashKey
+                    . QueueUrlParams::KeyValueSeparatorChar
+                    . $result->hashCode,
+                "",
+                $result->queueITToken
+            );
+
+            return $result;
         }
-
-        $result->queueITTokenWithoutHash = str_replace(
-            QueueUrlParams::KeyValueSeparatorGroupChar
-                . QueueUrlParams::HashKey
-                . QueueUrlParams::KeyValueSeparatorChar
-                . $result->hashCode,
-            "",
-            $result->queueITToken
-        );
-
-        return $result;
+        catch (\Exception $e) 
+        {
+            return null;
+        }        
     }
 }
 

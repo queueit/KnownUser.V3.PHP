@@ -10,6 +10,7 @@ require_once('QueueITHelpers.php');
 
 class KnownUser
 {
+    const QueueItTokenKey = "queueittoken";
     const QueueITAjaxHeaderKey = "x-queueit-ajaxpageurl";    
 
     //used for unittest
