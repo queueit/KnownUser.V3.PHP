@@ -41,7 +41,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        return "v3-php-" . "3.7.1";
+        return "v3-php-" . "3.7.2";
     }
 
     private $userInQueueStateRepository;
@@ -90,17 +90,18 @@ class UserInQueueService implements IUserInQueueService
         $requestValidationResult = null;
         $isTokenValid = false;
 
-        if ($queueParams != null) {
+        if($queueParams == null){
+            $requestValidationResult = $this->getQueueResult($targetUrl, $config, $customerId);
+        }
+        else{
             $tokenValidationResult = $this->validateToken($config, $queueParams, $secretKey);
-            $isTokenValid = $tokenValidationResult->isValid;
-
-            if ($isTokenValid) {
+            if($tokenValidationResult == null){
+                $requestValidationResult = $this->getQueueResult($targetUrl, $config, $customerId);
+            } elseif ($tokenValidationResult->isValid) {
                 $requestValidationResult = $this->getValidTokenResult($config, $queueParams, $secretKey);
             } else {
                 $requestValidationResult = $this->getErrorResult($customerId, $targetUrl, $config, $queueParams, $tokenValidationResult->errorCode);
             }
-        } else {
-            $requestValidationResult = $this->getQueueResult($targetUrl, $config, $customerId);
         }
         
         if ($state->isFound && !$isTokenValid)
@@ -297,21 +298,25 @@ class UserInQueueService implements IUserInQueueService
         QueueUrlParams $queueParams,
         $secretKey
     ) {
-        $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
+        try{
+            $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
 
-        if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
-            return new TokenValidationResult(false, "hash");
-        }
+            if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
+                return new TokenValidationResult(false, "hash");
+            }
 
-        if (strtoupper($queueParams->eventId) != strtoupper($config->eventId)) {
-            return new TokenValidationResult(false, "eventid");
-        }
+            if (strtoupper($queueParams->eventId) != strtoupper($config->eventId)) {
+                return new TokenValidationResult(false, "eventid");
+            }
 
-        if ($queueParams->timeStamp < time()) {
-            return new TokenValidationResult(false, "timestamp");
-        }
+            if ($queueParams->timeStamp < time()) {
+                return new TokenValidationResult(false, "timestamp");
+            }
 
-        return new TokenValidationResult(true, null);
+            return new TokenValidationResult(true, null);
+        }catch(\Exception $e) {
+            null;
+        }        
     }
 }
 

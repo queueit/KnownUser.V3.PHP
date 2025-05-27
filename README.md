@@ -15,21 +15,21 @@ the following method is all that is needed to validate that a user has been thro
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
+require_once( __DIR__ .'Utils.php');
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
 
-$queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
-
 try
 {
     $fullUrl = getFullRequestUri();
+    $queueittoken = Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig(
-       $currentUrlWithoutQueueitToken, $queueittoken, $configText, $customerID, $secretKey);
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig($currentUrlWithoutQueueitToken, 
+			$queueittoken, $configText, $customerID, $secretKey);
 		
     if($result->doRedirect())
     {
@@ -98,6 +98,7 @@ The following is an example of how to specify the configuration in code:
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
+require_once( __DIR__ .'Utils.php');
 
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
@@ -111,16 +112,15 @@ $eventConfig->extendCookieValidity = true; //Should the Queue-it session cookie 
 //$eventConfig->culture = "da-DK"; //Optional - Culture of the queue layout in the format specified here: https://msdn.microsoft.com/en-us/library/ee825488(v=cs.20).aspx. If unspecified then settings from Event will be used.
 // $eventConfig->layoutName = "NameOfYourCustomLayout"; //Optional - Name of the queue layout. If unspecified then settings from Event will be used.
 
-$queueittoken = isset( $_GET["queueittoken"] )? $_GET["queueittoken"] :'';
-
 try
-{
+{    
     $fullUrl = getFullRequestUri();
+    $queueittoken = Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has been through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig(
-       $currentUrlWithoutQueueitToken, $queueittoken, $eventConfig, $customerID, $secretKey);
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByLocalEventConfig($currentUrlWithoutQueueitToken, 
+			$queueittoken, $eventConfig, $customerID, $secretKey);
 	
     if($result->doRedirect())
     {
