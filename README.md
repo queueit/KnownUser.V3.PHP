@@ -15,7 +15,7 @@ the following method is all that is needed to validate that a user has been thro
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-require_once( __DIR__ .'Utils.php');
+require_once( __DIR__ .'QueueITHelpers.php');
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
@@ -24,7 +24,7 @@ $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-serv
 try
 {
     $fullUrl = getFullRequestUri();
-    $queueittoken = Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
+    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has been through the queue
@@ -98,7 +98,7 @@ The following is an example of how to specify the configuration in code:
 ```php
 require_once( __DIR__ .'Models.php');
 require_once( __DIR__ .'KnownUser.php');
-require_once( __DIR__ .'Utils.php');
+require_once( __DIR__ .'QueueITHelpers.php');
 
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
@@ -115,7 +115,7 @@ $eventConfig->extendCookieValidity = true; //Should the Queue-it session cookie 
 try
 {    
     $fullUrl = getFullRequestUri();
-    $queueittoken = Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
+    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has been through the queue
