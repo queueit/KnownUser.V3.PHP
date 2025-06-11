@@ -1,33 +1,32 @@
 # KnownUser.V3.PHP
-Before getting started please read the [documentation](https://github.com/queueit/Documentation/tree/main/serverside-connectors) to get acquainted with server-side connectors.
+Before getting started please read the [documentation] (https://github.com/queueit/Documentation/tree/main/serverside-connectors) to get acquainted with server-side connectors.
 
 This connector supports PHP >= 5.3.3.
 
-You can find the latest released version [here](https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and packagist package [here](https://packagist.org/packages/queueit/knownuserv3).
+You can find the latest released version [here] (https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and packagist package [here] (https://packagist.org/packages/queueit/knownuserv3).
 
 ## Implementation
 The KnownUser validation must be done on *all requests except requests for static and cached pages, resources like images, css files and ...*. 
-So, if you add the KnownUser validation logic to a central place, then be sure that the Triggers only fire on page requests (including ajax requests) and not on e.g. image.
+So, if you add the KnownUser validation logic to a central place, then make sure that the Triggers only fire on page requests (including ajax requests) and not on e.g. image.
 
-If we have the `integrationconfig.json` copied  in the folder beside other knownuser files inside web application folder then 
-the following method is all that is needed to validate that a user has been through the queue:
+If the integrationconfig.json file is placed in the same folder as the other KnownUser files within the web application directory, 
+then the following method is all that’s needed to validate that a user has passed through the queue:
  
 ```php
-require_once( __DIR__ .'Models.php');
-require_once( __DIR__ .'KnownUser.php');
-require_once( __DIR__ .'QueueITHelpers.php');
+require_once( __DIR__ .'/Models.php');
+require_once( __DIR__ .'/KnownUser.php');
 
 $configText = file_get_contents('integrationconfig.json');
 $customerID = ""; //Your Queue-it customer ID
-$secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
+$secretKey = ""; //Your 72 characters secret key as specified in Go Queue-it self-service platform
 
 try
 {
     $fullUrl = getFullRequestUri();
-    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
+    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, QueueIT\KnownUserV3\SDK\KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
-    //Verify if the user has been through the queue
+    //Verify if the user has passed through the queue
     $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByIntegrationConfig($currentUrlWithoutQueueitToken, 
 			$queueittoken, $configText, $customerID, $secretKey);
 		
@@ -41,7 +40,7 @@ try
     
         if(!$result->isAjaxResult)
         {
-            //Send the user to the queue - either because hash was missing or because is was invalid
+            //Send the user to the queue - either because the hash was missing or because it was invalid
             header('Location: ' . $result->redirectUrl);		            
         }
         else
@@ -55,24 +54,24 @@ try
     }
     if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
-	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+	//Request can continue - we remove queueittoken from the query string to avoid sharing a user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
 	die();
     }
 }
 catch(\Exception $e)
 {
-    // There was an error validating the request
+    // There is an error validating the request
     // Use your own logging framework to log the error
-    // This was a configuration error, so we let the user continue
+    // This is a configuration error, so we allow the user to continue
 }
 ```
 
-Helper method to get the current url (you can have your own).
-The result of this helper method is used to match Triggers and as the Target url (where to return the users to).
-It is therefor important that the result is exactly the url of the users browsers. 
+Helper method to get the current url (you can use your own implementation).
+The result of this helper method is used to match Triggers and as the Target url (where users are returned to).
+It is therefore important that the result exactly matches the URL in the user's browser.
 
-So if your webserver is e.g. behind a load balancer that modifies the host name or port, reformat the helper method as needed:
+So, if your web server is, for example, behind a load balancer that modifies the hostname or port, adjust the helper method accordingly:
 ```php
  function getFullRequestUri()
  {
@@ -91,14 +90,13 @@ So if your webserver is e.g. behind a load balancer that modifies the host name 
 
 ## Implementation using inline queue configuration
 Specify the configuration in code without using the Trigger/Action paradigm. In this case it is important *only to queue-up page requests* and not requests for resources. 
-This can be done by adding custom filtering logic before caling the `KnownUser::resolveQueueRequestByLocalConfig()` method. 
+This can be done by adding custom filtering logic before calling the `QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig()` method. 
 
 The following is an example of how to specify the configuration in code:
 
 ```php
-require_once( __DIR__ .'Models.php');
-require_once( __DIR__ .'KnownUser.php');
-require_once( __DIR__ .'QueueITHelpers.php');
+require_once( __DIR__ .'/Models.php');
+require_once( __DIR__ .'/KnownUser.php');
 
 $customerID = ""; //Your Queue-it customer ID
 $secretKey = ""; //Your 72 char secret key as specified in Go Queue-it self-service platform
@@ -115,10 +113,10 @@ $eventConfig->extendCookieValidity = true; //Should the Queue-it session cookie 
 try
 {    
     $fullUrl = getFullRequestUri();
-    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, KnownUser::QueueItTokenKey);
+    $queueittoken = QueueIT\KnownUserV3\SDK\Utils::getParameterByName($fullUrl, QueueIT\KnownUserV3\SDK\KnownUser::QueueItTokenKey);
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
-    //Verify if the user has been through the queue
+    //Verify if the user has passed through the queue
     $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByLocalEventConfig($currentUrlWithoutQueueitToken, 
 			$queueittoken, $eventConfig, $customerID, $secretKey);
 	
@@ -145,22 +143,22 @@ try
     }
     if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
-	//Request can continue - we remove queueittoken form querystring parameter to avoid sharing of user specific token
+	//Request can continue - we remove queueittoken form the query string parameter to avoid sharing of user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
 	die();
     }
 }
 catch(\Exception $e)
 {
-    // There was an error validating the request
+    // There is an error validating the request
     // Use your own logging framework to log the error
-    // This was a configuration error, so we let the user continue
+    // This is a configuration error, so we allow the user to continue
 }
 ```
 ## Request body trigger (advanced)
 
 The connector supports triggering on request body content. An example could be a POST call with specific item ID where you want end-users to queue up for.
-For this to work, you will need to contact Queue-it support or enable request body triggers in your integration settings in your GO Queue-it platform account.
+For this to work, you need to contact Queue-it support or enable request body triggers in your integration settings in your GO Queue-it platform account.
 Once enabled you will need to update your integration so request body is available for the connector.  
 You need to create a new context provider similar to this one:
 
