@@ -41,7 +41,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        return "v3-php-" . "3.7.2";
+        return "v3-php-" . "3.7.4";
     }
 
     private $userInQueueStateRepository;
