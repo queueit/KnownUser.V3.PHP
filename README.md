@@ -1,9 +1,9 @@
 # KnownUser.V3.PHP
-Before getting started please read the [documentation] (https://github.com/queueit/Documentation/tree/main/serverside-connectors) to get acquainted with server-side connectors.
+Before getting started please read the [documentation](https://github.com/queueit/Documentation/tree/main/serverside-connectors) to get acquainted with server-side connectors.
 
 This connector supports PHP >= 5.3.3.
 
-You can find the latest released version [here] (https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and packagist package [here] (https://packagist.org/packages/queueit/knownuserv3).
+You can find the latest released version [here](https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and packagist package [here](https://packagist.org/packages/queueit/knownuserv3).
 
 ## Implementation
 The KnownUser validation must be done on *all requests except requests for static and cached pages, resources like images, css files and ...*. 
@@ -117,7 +117,7 @@ try
     $currentUrlWithoutQueueitToken = preg_replace("/([\\?&])("."queueittoken"."=[^&]*)/i", "", $fullUrl);
 
     //Verify if the user has passed through the queue
-    $result = QueueIT\KnownUserV3\SDK\KnownUser::validateRequestByLocalEventConfig($currentUrlWithoutQueueitToken, 
+    $result = QueueIT\KnownUserV3\SDK\KnownUser::resolveQueueRequestByLocalConfig($currentUrlWithoutQueueitToken, 
 			$queueittoken, $eventConfig, $customerID, $secretKey);
 	
     if($result->doRedirect())
