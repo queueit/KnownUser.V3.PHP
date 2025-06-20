@@ -315,7 +315,7 @@ class UserInQueueService implements IUserInQueueService
 
             return new TokenValidationResult(true, null);
         }catch(\Exception $e) {
-            null;
+            return null;
         }        
     }
 }
