@@ -1,0 +1,100 @@
+name: Final GitHub Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set SDK version from composer.json
+        id: get_version
+        run: |
+          SDK_VERSION=$(jq -r '.version' composer.json)
+          if [ -z "$SDK_VERSION" ] || [ "$SDK_VERSION" = "null" ]; then
+            echo "composer.json .version is missing"
+            exit 1
+          fi
+          echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
+          echo "Extracted SDK_VERSION: $SDK_VERSION"
+
+      # Find the PR associated with this commit (merge, squash or rebase)
+      - name: Get PR for this commit
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const sha = context.sha;
+            const res = await github.request('GET /repos/{owner}/{repo}/commits/{ref}/pulls', {
+              owner, repo, ref: sha,
+              headers: { accept: 'application/vnd.github+json' }
+            });
+
+            if (!res.data.length) {
+              core.notice('No PR associated with this commit. Falling back to default body.');
+              core.setOutput('number', '');
+              core.setOutput('title', '');
+              core.setOutput('body', '');
+            } else {
+              const pr = res.data[0];
+              core.setOutput('number', String(pr.number));
+              core.setOutput('title', pr.title ?? '');
+              core.setOutput('body', pr.body ?? '');
+            }
+
+      # Write PR body to file for body_path (handles multiline safely)
+      - name: Write PR body to file
+        run: |
+          cat <<'EOF' > pr_body.md
+          ${{ steps.pr.outputs.body }}
+          EOF
+
+      - name: Create release assets
+        run: |
+          tar -czf php-connector-${{ env.SDK_VERSION }}.tar.gz \
+            *.php composer.json Documentation/ Tests/ README.md license.txt
+          echo "Created archive: php-connector-${{ env.SDK_VERSION }}.tar.gz"
+
+      - name: "Debug: Show release variables"
+        run: |
+          echo "=== DEBUG: Release Information ==="
+          echo "SDK_VERSION: ${{ env.SDK_VERSION }}"
+          echo "PR_NUMBER: ${{ steps.pr.outputs.number }}"
+          echo "PR_TITLE:  ${{ steps.pr.outputs.title }}"
+          echo "Asset: php-connector-${{ env.SDK_VERSION }}.tar.gz"
+
+      - name: Create Git tag
+        run: |
+          git config user.name "$QUEUEIT_GITHUB_NAME"
+          git config user.email "$QUEUEIT_GITHUB_EMAIL"
+          git tag "${{ env.SDK_VERSION }}"
+          git push origin "${{ env.SDK_VERSION }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.SDK_VERSION }}
+          name: ${{ env.SDK_VERSION }}
+          body_path: pr_body.md
+          files: php-connector-${{ env.SDK_VERSION }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release verification links
+        run: |
+          echo "Release created. Check:"
+          echo "- Tags: https://github.com/${{ github.repository }}/tags"
+          echo "- Releases: https://github.com/${{ github.repository }}/releases"
+          echo "- Latest Release: https://github.com/${{ github.repository }}/releases/tag/${{ env.SDK_VERSION }}"

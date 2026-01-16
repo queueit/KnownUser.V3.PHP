@@ -425,15 +425,15 @@ class CookieManager implements ICookieManager
     public function setCookie($name, $value, $expire, $domain, $isHttpOnly, $isSecure)
     {
         if(is_null($value)){ $value = ""; }
-        
+
         if(is_null($expire)){ $expire = 0; }
-        
+
         if(is_null($domain)){ $domain = ""; }
 
         if(is_null($isHttpOnly)){ $isHttpOnly = false; }
     
         if(is_null($isSecure)){ $isSecure = false; }
-
+            
         setcookie($name, $value, $expire, "/", $domain, $isSecure, $isHttpOnly);
     }
 

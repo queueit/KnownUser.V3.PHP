@@ -1,6 +1,7 @@
 <?php
 require_once( __DIR__ . '/vendor/simpletest/simpletest/autorun.php');
 
+
 class AllTests extends TestSuite {
     function AllTests() {
         

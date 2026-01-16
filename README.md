@@ -54,9 +54,9 @@ try
     }
     if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
-	//Request can continue - we remove queueittoken from the query string to avoid sharing a user specific token
+        //Request can continue - we remove queueittoken from the query string to avoid sharing a user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
-	die();
+        die();
     }
 }
 catch(\Exception $e)

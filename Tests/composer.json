@@ -1,5 +1,5 @@
 {
     "require-dev": {
-        "simpletest/simpletest": "^1.1"
+        "simpletest/simpletest": "1.1.7"
     }
 }
