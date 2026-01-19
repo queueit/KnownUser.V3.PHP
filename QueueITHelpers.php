@@ -59,8 +59,8 @@ class QueueUrlParams
         if (Utils::isNullOrEmptyString($queueitToken)) {
             return null;
         }
-        
-        try
+
+	try
         {
             $result = new QueueUrlParams();
             $result->queueITToken = $queueitToken;

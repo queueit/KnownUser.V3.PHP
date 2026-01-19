@@ -41,17 +41,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        // Try to read version from composer.json first
-        $composerPath = __DIR__ . '/composer.json';
-        if (file_exists($composerPath)) {
-            $composerData = json_decode(file_get_contents($composerPath), true);
-            if (isset($composerData['version'])) {
-                return "v3-php-" . $composerData['version'];
-            }
-        }
-        
-        // Fallback to hardcoded version
-        return "v3-php-" . "3.7.5";
+       return "v3-php-" . "3.7.5";
     }
 
     private $userInQueueStateRepository;
