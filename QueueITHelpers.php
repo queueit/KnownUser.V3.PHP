@@ -60,7 +60,7 @@ class QueueUrlParams
             return null;
         }
 
-	try
+	    try
         {
             $result = new QueueUrlParams();
             $result->queueITToken = $queueitToken;
