@@ -41,7 +41,7 @@ class UserInQueueService implements IUserInQueueService
 {
     public static function getSDKVersion()
     {
-        return "v3-php-" . "3.7.4";
+       return "v3-php-" . "3.7.5";
     }
 
     private $userInQueueStateRepository;
@@ -103,7 +103,7 @@ class UserInQueueService implements IUserInQueueService
                 $requestValidationResult = $this->getErrorResult($customerId, $targetUrl, $config, $queueParams, $tokenValidationResult->errorCode);
             }
         }
-        
+
         if ($state->isFound && !$isTokenValid)
         {
             $this->userInQueueStateRepository->cancelQueueCookie(
@@ -298,7 +298,8 @@ class UserInQueueService implements IUserInQueueService
         QueueUrlParams $queueParams,
         $secretKey
     ) {
-        try{
+        try
+        {
             $calculatedHash = hash_hmac('sha256', $queueParams->queueITTokenWithoutHash, $secretKey);
 
             if (strtoupper($calculatedHash) != strtoupper($queueParams->hashCode)) {
@@ -314,9 +315,10 @@ class UserInQueueService implements IUserInQueueService
             }
 
             return new TokenValidationResult(true, null);
-        }catch(\Exception $e) {
-            null;
-        }        
+        }
+        catch(\Exception $e) {
+            return null;
+        }
     }
 }
 

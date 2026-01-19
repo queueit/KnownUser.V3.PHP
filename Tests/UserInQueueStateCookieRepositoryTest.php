@@ -18,10 +18,11 @@ class UserInQueueStateCookieManagerMock implements QueueIT\KnownUserV3\SDK\ICook
     }
 
     public function setCookie($cookieName, $value, $expire, $domain, $isHttpOnly, $isSecure) {
+
         if(is_null($value)){ $value = ""; }
-        
+
         if(is_null($expire)){ $expire = 0; }
-        
+
         if(is_null($domain)){ $domain = ""; }
 
         if(is_null($isHttpOnly)){ $isHttpOnly = false; }

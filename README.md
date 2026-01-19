@@ -5,6 +5,8 @@ This connector supports PHP >= 5.3.3.
 
 You can find the latest released version [here](https://github.com/queueit/KnownUser.V3.PHP/releases/latest) and packagist package [here](https://packagist.org/packages/queueit/knownuserv3).
 
+**Note: this public repository is not intended to receive contributions via pull requests. The formal procedure is to inform about this through Queue-it support**
+
 ## Implementation
 The KnownUser validation must be done on *all requests except requests for static and cached pages, resources like images, css files and ...*. 
 So, if you add the KnownUser validation logic to a central place, then make sure that the Triggers only fire on page requests (including ajax requests) and not on e.g. image.
@@ -54,9 +56,9 @@ try
     }
     if(!empty($queueittoken) && $result->actionType == "Queue")
     {        
-	//Request can continue - we remove queueittoken from the query string to avoid sharing a user specific token
+        //Request can continue - we remove queueittoken from the query string to avoid sharing a user specific token
         header('Location: ' . $currentUrlWithoutQueueitToken);
-	die();
+        die();
     }
 }
 catch(\Exception $e)
